@@ -1,32 +1,43 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
+#include "TextField.h"
+#include "StateButton.h"
+
+#define _USE_MATH_DEFINES
+
 #include <iostream>
 #include <fstream>
 #include <thread>
-
+#include <complex>
+#include <math.h>
 
 sf::Image Result;
 int resolution = 768;
 bool isComputed = false;
 double MandelbrotRadius = 2;
-sf::Vector2<double> Center(0, 0);
+sf::Vector2<double> Center(-0.5, 0);
+TextField iterationsField(sf::IntRect(20, 100, 100, 40), FieldType::Number, 1);
+StateButton colorScheme(sf::IntRect(140, 100, 40, 40));
 
 void compute()
 {
-	std::cout << "X: " << Center.x << " Y: " << Center.y << " Radius: " << MandelbrotRadius << "\n";
-	int iMax = 100;
+	int iMax = iterationsField.getValueInt();
+	double unit = 2 * MandelbrotRadius / (double)resolution;
 
-	for (int stepY = 0; stepY < resolution; stepY++) 
+	for (int stepY = 0; stepY < resolution; stepY++)
 	{
 		for (int stepX = 0; stepX < resolution; stepX++)
 		{
-			double c_re = Center.x+((stepX - resolution / MandelbrotRadius)*MandelbrotRadius * 2 / resolution);
-			double c_im = (-Center.y)+((stepY - resolution / MandelbrotRadius)*MandelbrotRadius * 2 / resolution);
-			double x = 0, y = 0;
-			int i = 0;
+			double x = Center.x - MandelbrotRadius + stepX*unit;
+			double y = Center.y - MandelbrotRadius + stepY*unit;
 
-			while (hypot(x, y) <= 4 && i < iMax)
+			double c_re = x;
+			double c_im = y;
+			x = 0;
+			y = 0;
+			int i = 0;
+			while (x*x + y*y <= 4 && i < iMax)
 			{
 				double x_new = x*x - y*y + c_re;
 				y = 2 * x*y + c_im;
@@ -37,26 +48,44 @@ void compute()
 			if (i < iMax)
 			{
 				double iLin = 255 / (double)iMax*i;
-				Result.setPixel(stepX, stepY, sf::Color(iLin, sin(iLin), cos(iLin)));
+				
+				if (colorScheme.getState() == 'R')
+				{
+					Result.setPixel(stepX, resolution - stepY - 1, sf::Color(iLin, sin(iLin), cos(iLin)));
+				}
+				else if(colorScheme.getState() == 'G')
+				{
+					Result.setPixel(stepX, resolution - stepY - 1, sf::Color(sin(iLin), iLin, cos(iLin)));
+				}
+				else if (colorScheme.getState() == 'B')
+				{
+					Result.setPixel(stepX, resolution - stepY - 1, sf::Color(sin(iLin), cos(iLin), iLin));
+				}
 			}
 			else
 			{
-				Result.setPixel(stepX, stepY, sf::Color::Black);
+				Result.setPixel(stepX, resolution - stepY - 1, sf::Color::Black);
 			}
 		}
 	}
-
 	isComputed = true;
 }
 
 int main(int argc, char** argv)
 {
+	if (argc == 4)
+	{
+		Center.x = std::stoi(argv[1]);
+		Center.y = std::stoi(argv[2]);
+		MandelbrotRadius = std::stoi(argv[3]);
+	}
+
 	sf::VideoMode Pulpit = sf::VideoMode::getDesktopMode();
 	sf::RenderWindow Window(sf::VideoMode(Pulpit.width, Pulpit.height), "Mandelbrot", sf::Style::Fullscreen);
 
 	sf::FloatRect GraphDimensions(Pulpit.width - Pulpit.height, 0, Pulpit.height, Pulpit.height);
 	sf::FloatRect SettingsDimensions(0, 0, Pulpit.width - Pulpit.height - 2, Pulpit.height);
-	
+
 	Result.create(resolution, resolution, sf::Color::White);
 	sf::Texture ResultTexture;
 	sf::Sprite ResultSprite;
@@ -77,20 +106,25 @@ int main(int argc, char** argv)
 	radiusText.setPosition(0, 30);
 	radiusText.setCharacterSize(24);
 
+	iterationsField.setString("100");
+
 	std::thread computing;
+	isComputed = false;
+	computing = std::thread(compute);
+	computing.detach();
 
 	sf::Clock clock;
-	bool selectedCenter = false, clickedLeft=false;
+	bool selectedCenter = false, clickedLeft = false;
 	sf::Vector2<double> newCenter(Center.x, Center.y);
 	sf::Vector2i pixelCenter;
 	double newRadius = MandelbrotRadius;
 
 	sf::VertexArray radiusFrame(sf::PrimitiveType::LinesStrip, 5);
-	radiusFrame[0].color = sf::Color::Green;
-	radiusFrame[1].color = sf::Color::Green;
-	radiusFrame[2].color = sf::Color::Green;
-	radiusFrame[3].color = sf::Color::Green;
-	radiusFrame[4].color = sf::Color::Green;
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		radiusFrame[i].color = sf::Color::Green;
+	}
 
 	while (Window.isOpen())
 	{
@@ -102,13 +136,29 @@ int main(int argc, char** argv)
 		{
 			if (Event.type == sf::Event::Closed || (Event.type == sf::Event::KeyReleased && Event.key.code == sf::Keyboard::Escape))
 				Window.close();
-			if (Event.type == sf::Event::KeyReleased && Event.key.code == sf::Keyboard::Return)
+			else if (Event.type == sf::Event::KeyReleased && Event.key.code == sf::Keyboard::Return)
 			{
 				Center = newCenter;
 				MandelbrotRadius = newRadius;
 				isComputed = false;
 				computing = std::thread(compute);
 				computing.detach();
+
+				for (size_t i = 0; i < 5; i++)
+				{
+					radiusFrame[i].position = sf::Vector2f(0, 0);
+				}
+			}
+			else if (Event.type == sf::Event::TextEntered && Event.text.unicode != 8 && Event.text.unicode != 10 && Event.text.unicode != 13)		//backspace, space, enter
+			{
+
+				iterationsField.updateKeyboard(Event);
+
+			}
+			else if (Event.type == sf::Event::KeyPressed && Event.key.code == sf::Keyboard::BackSpace)
+			{
+
+				iterationsField.eraseCharacter();
 			}
 		}
 
@@ -122,7 +172,7 @@ int main(int argc, char** argv)
 		if (GraphDimensions.contains(mouse.getPosition().x, mouse.getPosition().y))
 		{
 			double x = (mouse.getPosition().x - GraphDimensions.left) / (double)GraphDimensions.width*(MandelbrotRadius * 2) + Center.x - MandelbrotRadius;
-			double y = (GraphDimensions.top+GraphDimensions.height-mouse.getPosition().y) / (double)GraphDimensions.height*(MandelbrotRadius * 2) + Center.y - MandelbrotRadius;
+			double y = (GraphDimensions.top + GraphDimensions.height - mouse.getPosition().y) / (double)GraphDimensions.height*(MandelbrotRadius * 2) + Center.y - MandelbrotRadius;
 			centerText.setString("X: " + std::to_string(x) + " Y: " + std::to_string(y));
 
 			if (!selectedCenter && !mouse.isButtonPressed(sf::Mouse::Button::Left) && clickedLeft)
@@ -133,7 +183,7 @@ int main(int argc, char** argv)
 				selectedCenter = true;
 				newCenter.x = x;
 				newCenter.y = y;
-			}			
+			}
 
 			if (selectedCenter)
 			{
@@ -162,11 +212,16 @@ int main(int argc, char** argv)
 			}
 		}
 
+		iterationsField.updateMouse(mouse);
+		colorScheme.updateMouse(mouse);
+
 		Window.clear(sf::Color::White);
 		Window.draw(ResultSprite);
 		Window.draw(centerText);
 		Window.draw(radiusText);
 		Window.draw(radiusFrame);
+		iterationsField.draw(Window);
+		colorScheme.draw(Window);
 		Window.display();
 	}
 
