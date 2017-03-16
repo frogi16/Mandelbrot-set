@@ -3,6 +3,7 @@
 
 #include "TextField.h"
 #include "StateButton.h"
+#include "Button.h"
 
 #define _USE_MATH_DEFINES
 
@@ -94,6 +95,8 @@ int main(int argc, char** argv)
 	sf::Font arial;
 	arial.loadFromFile("arial.ttf");
 
+	Button resetButton(sf::IntRect(200, 100, 120, 40), "Reset");
+
 	sf::Text centerText;
 	centerText.setFont(arial);
 	centerText.setColor(sf::Color::Black);
@@ -106,7 +109,7 @@ int main(int argc, char** argv)
 	radiusText.setPosition(0, 30);
 	radiusText.setCharacterSize(24);
 
-	iterationsField.setString("100");
+	iterationsField.setString("128");
 
 	std::thread computing;
 	isComputed = false;
@@ -151,9 +154,7 @@ int main(int argc, char** argv)
 			}
 			else if (Event.type == sf::Event::TextEntered && Event.text.unicode != 8 && Event.text.unicode != 10 && Event.text.unicode != 13)		//backspace, space, enter
 			{
-
 				iterationsField.updateKeyboard(Event);
-
 			}
 			else if (Event.type == sf::Event::KeyPressed && Event.key.code == sf::Keyboard::BackSpace)
 			{
@@ -214,6 +215,15 @@ int main(int argc, char** argv)
 
 		iterationsField.updateMouse(mouse);
 		colorScheme.updateMouse(mouse);
+		resetButton.updateMouse(mouse);
+
+		if (resetButton.clicked())
+		{
+			iterationsField.setString("128");
+			newRadius = 2;
+			newCenter.x = -0.5;
+			newCenter.y = 0;
+		}
 
 		Window.clear(sf::Color::White);
 		Window.draw(ResultSprite);
@@ -222,6 +232,7 @@ int main(int argc, char** argv)
 		Window.draw(radiusFrame);
 		iterationsField.draw(Window);
 		colorScheme.draw(Window);
+		resetButton.draw(Window);
 		Window.display();
 	}
 

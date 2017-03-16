@@ -152,12 +152,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="GUIElement.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="StateButton.cpp" />
     <ClCompile Include="TextField.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Button.h" />
     <ClInclude Include="GUIElement.h" />
     <ClInclude Include="StateButton.h" />
     <ClInclude Include="TextField.h" />
