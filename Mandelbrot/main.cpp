@@ -13,25 +13,28 @@
 #include <complex>
 #include <math.h>
 
-sf::Image Result;
-int resolution = 768;
+sf::Image result;
 bool isComputed = false;
-double MandelbrotRadius = 2;
-sf::Vector2<double> Center(-0.5, 0);
-TextField iterationsField(sf::IntRect(20, 100, 100, 40), FieldType::Number, 1);
-StateButton colorScheme(sf::IntRect(140, 100, 40, 40));
 
-void compute()
+struct View
 {
-	int iMax = iterationsField.getValueInt();
-	double unit = 2 * MandelbrotRadius / (double)resolution;
+	int resolution{ 768 }, iterations{ 128 };
+	double radius{ 2 };		//half of the side of the square
+	sf::Vector2<double> center{ -0.5, 0 };
+	char color{ 'R' };
+};
 
-	for (int stepY = 0; stepY < resolution; stepY++)
+void compute(View &settings)
+{
+	int iMax = settings.iterations;
+	double unit = 2 * settings.radius / (double)settings.resolution;
+
+	for (int stepY = 0; stepY < settings.resolution; stepY++)
 	{
-		for (int stepX = 0; stepX < resolution; stepX++)
+		for (int stepX = 0; stepX < settings.resolution; stepX++)
 		{
-			double x = Center.x - MandelbrotRadius + stepX*unit;
-			double y = Center.y - MandelbrotRadius + stepY*unit;
+			double x = settings.center.x - settings.radius + stepX*unit;
+			double y = settings.center.y - settings.radius + stepY*unit;
 
 			double c_re = x;
 			double c_im = y;
@@ -40,7 +43,7 @@ void compute()
 			int i = 0;
 			while (x*x + y*y <= 4 && i < iMax)
 			{
-				double x_new = x*x - y*y + c_re;
+				double x_new = pow(x,2) - pow(y,2) + c_re;
 				y = 2 * x*y + c_im;
 				x = x_new;
 				i++;
@@ -50,22 +53,24 @@ void compute()
 			{
 				double iLin = 255 / (double)iMax*i;
 				
-				if (colorScheme.getState() == 'R')
+				switch (settings.color)
 				{
-					Result.setPixel(stepX, resolution - stepY - 1, sf::Color(iLin, sin(iLin), cos(iLin)));
-				}
-				else if(colorScheme.getState() == 'G')
-				{
-					Result.setPixel(stepX, resolution - stepY - 1, sf::Color(sin(iLin), iLin, cos(iLin)));
-				}
-				else if (colorScheme.getState() == 'B')
-				{
-					Result.setPixel(stepX, resolution - stepY - 1, sf::Color(sin(iLin), cos(iLin), iLin));
+				case 'R':
+					result.setPixel(stepX, settings.resolution - stepY - 1, sf::Color(iLin, sin(iLin), cos(iLin)));
+					break;
+				case 'G':
+					result.setPixel(stepX, settings.resolution - stepY - 1, sf::Color(sin(iLin), iLin, cos(iLin)));
+					break;
+				case 'B':
+					result.setPixel(stepX, settings.resolution - stepY - 1, sf::Color(sin(iLin), cos(iLin), iLin));
+					break;
+				default:
+					break;
 				}
 			}
 			else
 			{
-				Result.setPixel(stepX, resolution - stepY - 1, sf::Color::Black);
+				result.setPixel(stepX, settings.resolution - stepY - 1, sf::Color::Black);
 			}
 		}
 	}
@@ -74,28 +79,35 @@ void compute()
 
 int main(int argc, char** argv)
 {
+	View previousView,		//undo
+		currentView,		//export
+		nextView;			//temporary storage
+
 	if (argc == 4)
 	{
-		Center.x = std::stoi(argv[1]);
-		Center.y = std::stoi(argv[2]);
-		MandelbrotRadius = std::stoi(argv[3]);
+		currentView.center.x = std::stoi(argv[1]);
+		currentView.center.y = std::stoi(argv[2]);
+		currentView.radius = std::stoi(argv[3]);
 	}
 
-	sf::VideoMode Pulpit = sf::VideoMode::getDesktopMode();
-	sf::RenderWindow Window(sf::VideoMode(Pulpit.width, Pulpit.height), "Mandelbrot", sf::Style::Fullscreen);
+	sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+	sf::RenderWindow window(sf::VideoMode(desktop.width, desktop.height), "Mandelbrot", sf::Style::Fullscreen);
 
-	sf::FloatRect GraphDimensions(Pulpit.width - Pulpit.height, 0, Pulpit.height, Pulpit.height);
-	sf::FloatRect SettingsDimensions(0, 0, Pulpit.width - Pulpit.height - 2, Pulpit.height);
+	sf::FloatRect graphDimensions(desktop.width - desktop.height, 0, desktop.height, desktop.height);
+	sf::FloatRect settingsDimensions(0, 0, desktop.width - desktop.height - 2, desktop.height);
+	currentView.resolution = graphDimensions.width;
 
-	Result.create(resolution, resolution, sf::Color::White);
-	sf::Texture ResultTexture;
-	sf::Sprite ResultSprite;
-	ResultSprite.setPosition(GraphDimensions.left, GraphDimensions.top);
+	result.create(currentView.resolution, currentView.resolution, sf::Color::White);
+	sf::Texture resultTexture;
+	sf::Sprite resultSprite;
+	resultSprite.setPosition(graphDimensions.left, graphDimensions.top);
 
 	sf::Font arial;
 	arial.loadFromFile("arial.ttf");
 
-	Button resetButton(sf::IntRect(200, 100, 120, 40), "Reset");
+	Button undoButton(sf::IntRect(200, 100, 120, 40), "Undo");
+	Button resetButton(sf::IntRect(340, 100, 120, 40), "Reset");
+	Button generateButton(sf::IntRect(480, 100, 120, 40), "Generate");
 
 	sf::Text centerText;
 	centerText.setFont(arial);
@@ -109,18 +121,23 @@ int main(int argc, char** argv)
 	radiusText.setPosition(0, 30);
 	radiusText.setCharacterSize(24);
 
+	TextField iterationsField(sf::IntRect(20, 100, 100, 40), FieldType::Number, 1);
 	iterationsField.setString("128");
+
+	StateButton colorScheme(sf::IntRect(140, 100, 40, 40));
 
 	std::thread computing;
 	isComputed = false;
-	computing = std::thread(compute);
+	computing = std::thread(compute, currentView);
 	computing.detach();
 
 	sf::Clock clock;
 	bool selectedCenter = false, clickedLeft = false;
-	sf::Vector2<double> newCenter(Center.x, Center.y);
+
+	const View defaultView = currentView;		//needed to reset settings
+	nextView = currentView;
+
 	sf::Vector2i pixelCenter;
-	double newRadius = MandelbrotRadius;
 
 	sf::VertexArray radiusFrame(sf::PrimitiveType::LinesStrip, 5);
 
@@ -129,51 +146,37 @@ int main(int argc, char** argv)
 		radiusFrame[i].color = sf::Color::Green;
 	}
 
-	while (Window.isOpen())
+	while (window.isOpen())
 	{
 		sf::Time elapsedTime = clock.restart();
 		sf::Event Event;
 		sf::Mouse mouse;
 
-		while (Window.pollEvent(Event))
+		while (window.pollEvent(Event))
 		{
-			if (Event.type == sf::Event::Closed || (Event.type == sf::Event::KeyReleased && Event.key.code == sf::Keyboard::Escape))
-				Window.close();
-			else if (Event.type == sf::Event::KeyReleased && Event.key.code == sf::Keyboard::Return)
-			{
-				Center = newCenter;
-				MandelbrotRadius = newRadius;
-				isComputed = false;
-				computing = std::thread(compute);
-				computing.detach();
-
-				for (size_t i = 0; i < 5; i++)
-				{
-					radiusFrame[i].position = sf::Vector2f(0, 0);
-				}
-			}
+			if (Event.type == sf::Event::Closed || (Event.type == sf::Event::KeyReleased && Event.key.code == sf::Keyboard::Escape))		//exit
+				window.close();
 			else if (Event.type == sf::Event::TextEntered && Event.text.unicode != 8 && Event.text.unicode != 10 && Event.text.unicode != 13)		//backspace, space, enter
 			{
 				iterationsField.updateKeyboard(Event);
 			}
 			else if (Event.type == sf::Event::KeyPressed && Event.key.code == sf::Keyboard::BackSpace)
 			{
-
 				iterationsField.eraseCharacter();
 			}
 		}
 
 		if (isComputed)
 		{
-			ResultTexture.loadFromImage(Result);
-			ResultSprite.setTexture(ResultTexture, true);
+			resultTexture.loadFromImage(result);
+			resultSprite.setTexture(resultTexture, true);
 			isComputed = false;
 		}
 
-		if (GraphDimensions.contains(mouse.getPosition().x, mouse.getPosition().y))
+		if (graphDimensions.contains(mouse.getPosition().x, mouse.getPosition().y))
 		{
-			double x = (mouse.getPosition().x - GraphDimensions.left) / (double)GraphDimensions.width*(MandelbrotRadius * 2) + Center.x - MandelbrotRadius;
-			double y = (GraphDimensions.top + GraphDimensions.height - mouse.getPosition().y) / (double)GraphDimensions.height*(MandelbrotRadius * 2) + Center.y - MandelbrotRadius;
+			double x = (mouse.getPosition().x - graphDimensions.left) / (double)graphDimensions.width*(currentView.radius * 2) + currentView.center.x - currentView.radius;
+			double y = (graphDimensions.top + graphDimensions.height - mouse.getPosition().y) / (double)graphDimensions.height*(currentView.radius * 2) + currentView.center.y - currentView.radius;
 			centerText.setString("X: " + std::to_string(x) + " Y: " + std::to_string(y));
 
 			if (!selectedCenter && !mouse.isButtonPressed(sf::Mouse::Button::Left) && clickedLeft)
@@ -182,8 +185,8 @@ int main(int argc, char** argv)
 				pixelCenter.y = mouse.getPosition().y;
 				clickedLeft = false;
 				selectedCenter = true;
-				newCenter.x = x;
-				newCenter.y = y;
+				nextView.center.x = x;
+				nextView.center.y = y;
 			}
 
 			if (selectedCenter)
@@ -195,13 +198,13 @@ int main(int argc, char** argv)
 				radiusFrame[3].position = sf::Vector2f(pixelCenter.x - distance, pixelCenter.y + distance);
 				radiusFrame[4].position = sf::Vector2f(pixelCenter.x - distance, pixelCenter.y - distance);
 
-				radiusText.setString("Radius: " + std::to_string(distance / GraphDimensions.width*MandelbrotRadius * 2));
+				radiusText.setString("Radius: " + std::to_string(distance / graphDimensions.width*currentView.radius * 2));
 
 				if (!mouse.isButtonPressed(sf::Mouse::Button::Left) && clickedLeft)
 				{
 					clickedLeft = false;
 					selectedCenter = false;
-					newRadius = distance / GraphDimensions.width*MandelbrotRadius * 2;
+					nextView.radius = distance / graphDimensions.width*currentView.radius * 2;
 				}
 				if (mouse.isButtonPressed(sf::Mouse::Button::Left))
 					clickedLeft = true;
@@ -215,25 +218,51 @@ int main(int argc, char** argv)
 
 		iterationsField.updateMouse(mouse);
 		colorScheme.updateMouse(mouse);
-		resetButton.updateMouse(mouse);
 
-		if (resetButton.clicked())
+		undoButton.updateMouse(mouse);
+		if (undoButton.clicked())
 		{
-			iterationsField.setString("128");
-			newRadius = 2;
-			newCenter.x = -0.5;
-			newCenter.y = 0;
+			iterationsField.setString(std::to_string(previousView.iterations));
+			nextView = previousView;
 		}
 
-		Window.clear(sf::Color::White);
-		Window.draw(ResultSprite);
-		Window.draw(centerText);
-		Window.draw(radiusText);
-		Window.draw(radiusFrame);
-		iterationsField.draw(Window);
-		colorScheme.draw(Window);
-		resetButton.draw(Window);
-		Window.display();
+		resetButton.updateMouse(mouse);
+		if (resetButton.clicked())
+		{
+			iterationsField.setString(std::to_string(defaultView.iterations));
+			nextView = defaultView;
+		}
+
+		generateButton.updateMouse(mouse);
+		if (generateButton.clicked())
+		{
+			nextView.color = colorScheme.getState();
+			nextView.iterations = iterationsField.getValueInt();
+
+			previousView = std::move(currentView);
+			currentView = std::move(nextView);
+
+			isComputed = false;
+			computing = std::thread(compute, currentView);
+			computing.detach();
+
+			for (size_t i = 0; i < 5; i++)
+			{
+				radiusFrame[i].position = sf::Vector2f(0, 0);
+			}
+		}
+
+		window.clear(sf::Color::White);
+		window.draw(resultSprite);
+		window.draw(centerText);
+		window.draw(radiusText);
+		window.draw(radiusFrame);
+		iterationsField.draw(window);
+		colorScheme.draw(window);
+		undoButton.draw(window);
+		resetButton.draw(window);
+		generateButton.draw(window);
+		window.display();
 	}
 
 	return 0;

@@ -11,7 +11,7 @@ Button::Button(sf::IntRect dimensions, std::string text) :
 	buttonText.setFont(arial);
 	buttonText.setString(text);
 	buttonText.setColor(sf::Color::Black);
-	buttonText.setCharacterSize(dimensions.height/3);
+	buttonText.setCharacterSize(dimensions.height/2);
 
 	button.setPosition(dimensions.left, dimensions.top);
 	button.setFillColor(sf::Color::White);
