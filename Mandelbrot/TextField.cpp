@@ -2,7 +2,7 @@
 
 
 
-TextField::TextField(sf::IntRect dimensions, FieldType type, int textLines) :
+TextField::TextField(sf::IntRect dimensions, FieldType type, const std::string text, int textLines) :
 	dimensions(dimensions),
 	type(type),
 	textLines(textLines),
@@ -21,7 +21,7 @@ TextField::TextField(sf::IntRect dimensions, FieldType type, int textLines) :
 	contentText.setCharacterSize(dimensions.height*0.9f / textLines);
 	contentText.setPosition(box.getPosition());
 	contentText.setFont(arial);
-	contentText.setString("0");
+	contentText.setString(text);
 	actualizeText();
 }
 

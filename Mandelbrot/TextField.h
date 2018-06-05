@@ -14,7 +14,7 @@ enum class FieldType
 class TextField : public GUIElement
 {
 public:
-	TextField(sf::IntRect dimensions, FieldType type, int textLines = 1);
+	TextField(sf::IntRect dimensions, FieldType type, const std::string text = "", int textLines = 1);
 	Informations getInformations() { return Informations{ true, true }; }
 	void updateMouse(const sf::Mouse& mouse);
 	void updateKeyboard(sf::Event& event);
