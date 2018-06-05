@@ -76,6 +76,8 @@ private:
 
 	sf::Vector2i pixelCenter;
 
+	sf::Vector2<double> mandelbrotSection;
+
 	sf::VertexArray radiusFrame;
 
 	std::thread computing;
