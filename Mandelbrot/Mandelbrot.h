@@ -30,13 +30,24 @@ public:
 	void init(int argc, char** argv);
 	void init();
 	void loop();
+	~Mandelbrot();
+private:
 	void handleEvents(sf::Event &event);
 	void update(sf::Mouse &mouse);
 	void handleClicks();
 	void draw();
 	void compute(View &settings);
-	~Mandelbrot();
-	
+	void startThread();
+	void clearFrame();
+
+	std::shared_ptr<Button> undoButton, resetButton, generateButton;
+	std::shared_ptr<StateButton> colorScheme;
+	std::shared_ptr<TextField> iterationsField;
+
+	std::vector<std::shared_ptr<Button>> buttons;
+	std::vector<std::shared_ptr<StateButton>> stateButtons;
+	std::vector<std::shared_ptr<TextField>> textFields;
+
 	View defaultView,		//reset 
 		previousView,		//undo
 		currentView,		//export
@@ -65,14 +76,5 @@ public:
 	sf::VertexArray radiusFrame;
 
 	std::thread computing;
-private:
-	std::shared_ptr<Button> undoButton, resetButton, generateButton;
-	std::shared_ptr<StateButton> colorScheme;
-	std::shared_ptr<TextField> iterationsField;
-
-	std::vector<std::shared_ptr<Button>> buttons;
-	std::vector<std::shared_ptr<StateButton>> stateButtons;
-	std::vector<std::shared_ptr<TextField>> textFields;
-
 };
 

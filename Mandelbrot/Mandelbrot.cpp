@@ -1,5 +1,6 @@
 #include "Mandelbrot.h"
 
+#include <complex>
 
 
 Mandelbrot::Mandelbrot()
@@ -8,9 +9,10 @@ Mandelbrot::Mandelbrot()
 
 void Mandelbrot::init(int argc, char ** argv)
 {
-	/*currentView.center.x = std::stoi(argv[1]);
+	currentView.center.x = std::stoi(argv[1]);
 	currentView.center.y = std::stoi(argv[2]);
-	currentView.radius = std::stoi(argv[3]);*/
+	currentView.radius = std::stoi(argv[3]);
+	init();
 }
 
 void Mandelbrot::init()
@@ -49,11 +51,9 @@ void Mandelbrot::init()
 	radiusText.setPosition(0, 30);
 	radiusText.setCharacterSize(24);
 
-	computing = std::thread(&Mandelbrot::compute, this, currentView);
-	computing.detach();
-
 	defaultView = currentView;		//needed to reset settings
 	nextView = currentView;
+	startThread();
 
 	radiusFrame.setPrimitiveType(sf::PrimitiveType::LinesStrip);
 	radiusFrame.resize(5);
@@ -180,13 +180,20 @@ void Mandelbrot::handleClicks()
 	if (undoButton->clicked())
 	{
 		iterationsField->setString(std::to_string(previousView.iterations));
-		nextView = previousView;
+		std::swap(currentView, previousView);
+
+		startThread();
+		clearFrame();
 	}
 
 	if (resetButton->clicked())
 	{
 		iterationsField->setString(std::to_string(defaultView.iterations));
-		nextView = defaultView;
+		previousView = std::move(currentView);
+		currentView = defaultView;
+
+		startThread();
+		clearFrame();
 	}
 
 	if (generateButton->clicked())
@@ -197,14 +204,8 @@ void Mandelbrot::handleClicks()
 		previousView = std::move(currentView);
 		currentView = std::move(nextView);
 
-		isComputed = false;
-		computing = std::thread(&Mandelbrot::compute, this, currentView);
-		computing.detach();
-
-		for (size_t i = 0; i < 5; i++)
-		{
-			radiusFrame[i].position = sf::Vector2f(0, 0);
-		}
+		startThread();
+		clearFrame();
 	}
 }
 
@@ -245,19 +246,35 @@ void Mandelbrot::compute(View & settings)
 	{
 		for (int stepX = 0; stepX < settings.resolution; stepX++)
 		{
-			double x = settings.center.x - settings.radius + stepX*unit;
-			double y = settings.center.y - settings.radius + stepY*unit;
+			//implementation written below proved to be ridiculously slow despite the use of standard complex type so I changed it to less elegant, but much more effective simple doubles arithmetic
+			//for default view settings it took about 6.13 seconds to compute all steps using complex type, whereas doubles needed 2.42 seconds on my computer (1 thread computing)
+			//left for further analysis
 
-			double c_re = x;
-			double c_im = y;
-			x = 0;
-			y = 0;
+			/*std::complex<double> z{ 0, 0 };
+			std::complex<double> c{ settings.center.x - settings.radius + stepX*unit, settings.center.y - settings.radius + stepY*unit };
 			int i = 0;
-			while (x*x + y*y <= 4 && i < iMax)
+
+			while (pow(z.real(), 2) + pow(z.imag(), 2) <= 4 && i < iMax)
 			{
-				double x_new = pow(x, 2) - pow(y, 2) + c_re;
-				y = 2 * x*y + c_im;
-				x = x_new;
+				double z_square = pow(z.real(), 2) - pow(z.imag(), 2) + c.real();
+
+				z.imag(2 * z.real()*z.imag() + c.imag());
+				z.real(z_square);
+				i++;
+			}*/
+
+			double z_x = 0;
+			double z_y = 0;
+			double c_x = settings.center.x - settings.radius + stepX*unit;
+			double c_y = settings.center.y - settings.radius + stepY*unit;
+			int i = 0;
+
+			while (pow(z_x, 2) + pow(z_y, 2) <= 4 && i < iMax)
+			{
+				double z_square = pow(z_x, 2) - pow(z_y, 2) + c_x;
+
+				z_y = 2 * z_x*z_y + c_y;
+				z_x = z_square;
 				i++;
 			}
 
@@ -287,6 +304,21 @@ void Mandelbrot::compute(View & settings)
 		}
 	}
 	isComputed = true;
+}
+
+void Mandelbrot::startThread()
+{
+	isComputed = false;
+	computing = std::thread(&Mandelbrot::compute, this, currentView);
+	computing.detach();
+}
+
+void Mandelbrot::clearFrame()
+{
+	for (size_t i = 0; i < 5; i++)
+	{
+		radiusFrame[i].position = sf::Vector2f(0, 0);
+	}
 }
 
 Mandelbrot::~Mandelbrot()
