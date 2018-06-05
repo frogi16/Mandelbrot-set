@@ -39,14 +39,17 @@ private:
 	void compute(View &settings);
 	void startThread();
 	void clearFrame();
+	void exportCoordinates();
 
-	std::shared_ptr<Button> undoButton, resetButton, generateButton;
+	std::shared_ptr<Button> undoButton, resetButton, generateButton, exportButton;
 	std::shared_ptr<StateButton> colorScheme;
 	std::shared_ptr<TextField> iterationsField;
+	std::shared_ptr<sf::Text> iterationsTitle, colorsTitle;
 
 	std::vector<std::shared_ptr<Button>> buttons;
 	std::vector<std::shared_ptr<StateButton>> stateButtons;
 	std::vector<std::shared_ptr<TextField>> textFields;
+	std::vector<std::shared_ptr<sf::Text>> texts;
 
 	View defaultView,		//reset 
 		previousView,		//undo

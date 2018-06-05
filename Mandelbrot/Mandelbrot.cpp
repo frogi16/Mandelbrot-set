@@ -1,7 +1,7 @@
 #include "Mandelbrot.h"
 
 #include <complex>
-
+#include <fstream>
 
 Mandelbrot::Mandelbrot()
 {
@@ -9,9 +9,9 @@ Mandelbrot::Mandelbrot()
 
 void Mandelbrot::init(int argc, char ** argv)
 {
-	currentView.center.x = std::stoi(argv[1]);
-	currentView.center.y = std::stoi(argv[2]);
-	currentView.radius = std::stoi(argv[3]);
+	currentView.center.x = std::stod(argv[1]);
+	currentView.center.y = std::stod(argv[2]);
+	currentView.radius = std::stod(argv[3]);
 	init();
 }
 
@@ -29,17 +29,29 @@ void Mandelbrot::init()
 
 	arial.loadFromFile("arial.ttf");
 
-	undoButton = std::make_shared<Button>(sf::IntRect(200, 100, 120, 40), "Undo");
-	resetButton = std::make_shared<Button>(sf::IntRect(340, 100, 120, 40), "Reset");
-	generateButton = std::make_shared<Button>(sf::IntRect(480, 100, 120, 40), "Generate");
+	undoButton = std::make_shared<Button>(sf::IntRect(220, 100, 120, 40), "Undo");
+	resetButton = std::make_shared<Button>(sf::IntRect(360, 100, 120, 40), "Reset");
+	exportButton = std::make_shared<Button>(sf::IntRect(220, 160, 120, 40), "Export");
+	generateButton = std::make_shared<Button>(sf::IntRect(360, 160, 120, 40), "Generate");
 	buttons.push_back(undoButton);
 	buttons.push_back(resetButton);
+	buttons.push_back(exportButton);
 	buttons.push_back(generateButton);
 
-	colorScheme = std::make_shared<StateButton>(sf::IntRect(140, 100, 40, 40));
-	iterationsField = std::make_shared<TextField>(sf::IntRect(20, 100, 100, 40), FieldType::Number, "128", 1);
+	colorScheme = std::make_shared<StateButton>(sf::IntRect(160, 100, 40, 40));
+	iterationsField = std::make_shared<TextField>(sf::IntRect(20, 100, 120, 40), FieldType::Number, "128", 1);
 	stateButtons.push_back(colorScheme);
 	textFields.push_back(iterationsField);
+
+	iterationsTitle = std::make_shared<sf::Text>("Iterations:", arial, 16);
+	iterationsTitle->setColor(sf::Color::Black);
+	iterationsTitle->setPosition(20, 80);
+	texts.push_back(iterationsTitle);
+
+	colorsTitle = std::make_shared<sf::Text>("Color:", arial, 16);
+	colorsTitle->setColor(sf::Color::Black);
+	colorsTitle->setPosition(160, 80);
+	texts.push_back(colorsTitle);
 
 	centerText.setFont(arial);
 	centerText.setColor(sf::Color::Black);
@@ -207,6 +219,11 @@ void Mandelbrot::handleClicks()
 		startThread();
 		clearFrame();
 	}
+
+	if (exportButton->clicked())
+	{
+		exportCoordinates();
+	}
 }
 
 
@@ -229,6 +246,11 @@ void Mandelbrot::draw()
 		i->draw(window);
 	}
 
+	for (auto& i : texts)
+	{
+		window.draw(*i);
+	}
+
 	window.draw(resultSprite);
 	window.draw(centerText);
 	window.draw(radiusText);
@@ -241,13 +263,13 @@ void Mandelbrot::compute(View & settings)
 {
 	int iMax = settings.iterations;
 	double unit = 2 * settings.radius / (double)settings.resolution;
-
+	
 	for (int stepY = 0; stepY < settings.resolution; stepY++)
 	{
 		for (int stepX = 0; stepX < settings.resolution; stepX++)
 		{
 			//implementation written below proved to be ridiculously slow despite the use of standard complex type so I changed it to less elegant, but much more effective simple doubles arithmetic
-			//for default view settings it took about 6.13 seconds to compute all steps using complex type, whereas doubles needed 2.42 seconds on my computer (1 thread computing)
+			//for default view settings it took about 6.13 seconds to compute all steps using complex type, whereas doubles needed 2.42 seconds on my computer (1 thread computing, debug mode)
 			//left for further analysis
 
 			/*std::complex<double> z{ 0, 0 };
@@ -319,6 +341,13 @@ void Mandelbrot::clearFrame()
 	{
 		radiusFrame[i].position = sf::Vector2f(0, 0);
 	}
+}
+
+void Mandelbrot::exportCoordinates()
+{
+	std::fstream out("out.txt", std::ios::app);
+	out << currentView.center.x << " " << currentView.center.y << " " << currentView.radius << "\n";
+	out.close();
 }
 
 Mandelbrot::~Mandelbrot()
