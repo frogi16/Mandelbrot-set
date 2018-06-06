@@ -36,17 +36,17 @@ private:
 	void update(sf::Mouse &mouse);
 	void handleClicks();
 	void draw();
-	void compute(View &settings);
+	void compute(const View &settings);
 	void adjustResolution();
 	void startThread();
 	void clearFrame();
-	void exportCoordinates();
-	void exportImage();
+	void exportCoordinates(std::string filename) const;
+	void exportImage(std::string filename);
 
 	std::shared_ptr<Button> undoButton, resetButton, generateButton, exportButton;
 	std::shared_ptr<StateButton> colorScheme;
-	std::shared_ptr<TextField> iterationsField, resolutionField;
-	std::shared_ptr<sf::Text> iterationsTitle, resolutionTitle, colorsTitle, loading;
+	std::shared_ptr<TextField> iterationsField, resolutionField, filenameField;
+	std::shared_ptr<sf::Text> iterationsTitle, resolutionTitle, colorsTitle, filenameTitle, loading;
 
 	std::vector<std::shared_ptr<Button>> buttons;
 	std::vector<std::shared_ptr<StateButton>> stateButtons;
@@ -80,6 +80,6 @@ private:
 
 	sf::VertexArray radiusFrame;
 
-	std::thread computing;
+	std::thread computing, exporting;
 };
 

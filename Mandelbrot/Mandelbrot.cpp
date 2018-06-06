@@ -41,9 +41,11 @@ void Mandelbrot::init()
 	colorScheme = std::make_shared<StateButton>(sf::IntRect(160, 100, 40, 40));
 	iterationsField = std::make_shared<TextField>(sf::IntRect(20, 100, 120, 40), FieldType::Number, "128", 1);
 	resolutionField = std::make_shared<TextField>(sf::IntRect(20, 160, 120, 40), FieldType::Number, std::to_string(graphDimensions.width), 1);
+	filenameField = std::make_shared<TextField>(sf::IntRect(20, 220, 460, 40), FieldType::All, "", 1);
 	stateButtons.push_back(colorScheme);
 	textFields.push_back(iterationsField);
 	textFields.push_back(resolutionField);
+	textFields.push_back(filenameField);
 
 	iterationsTitle = std::make_shared<sf::Text>("Iterations:", arial, 16);
 	iterationsTitle->setColor(sf::Color::Black);
@@ -59,6 +61,11 @@ void Mandelbrot::init()
 	colorsTitle->setColor(sf::Color::Black);
 	colorsTitle->setPosition(160, 80);
 	texts.push_back(colorsTitle);
+
+	filenameTitle = std::make_shared<sf::Text>("Filename:", arial, 16);
+	filenameTitle->setColor(sf::Color::Black);
+	filenameTitle->setPosition(20, 200);
+	texts.push_back(filenameTitle);
 
 	loading = std::make_shared<sf::Text>("...", arial, 48);
 	loading->setColor(sf::Color::Black);
@@ -237,8 +244,13 @@ void Mandelbrot::handleClicks()
 
 	if (exportButton->clicked())
 	{
-		exportCoordinates();
-		exportImage();
+		if (!isComputing)
+		{
+			isComputing = true;
+			exportCoordinates(filenameField->getValueString()+".txt");
+			exporting = std::thread(&Mandelbrot::exportImage, this, filenameField->getValueString() + ".png");
+			exporting.detach();
+		}
 	}
 }
 
@@ -278,7 +290,7 @@ void Mandelbrot::draw()
 	window.display();
 }
 
-void Mandelbrot::compute(View & settings)
+void Mandelbrot::compute(const View & settings)
 {
 	int iMax = settings.iterations;
 	double unit = 2 * settings.radius / (double)settings.resolution;
@@ -376,16 +388,17 @@ void Mandelbrot::clearFrame()
 	}
 }
 
-void Mandelbrot::exportCoordinates()
+void Mandelbrot::exportCoordinates(std::string filename) const
 {
-	std::fstream out("out.txt", std::ios::app);
+	std::fstream out(filename, std::ios::app);
 	out << currentView.center.x << " " << currentView.center.y << " " << currentView.radius << "\n";
 	out.close();
 }
 
-void Mandelbrot::exportImage()
+void Mandelbrot::exportImage(std::string filename)
 {
-	result.saveToFile("out.png");
+	result.saveToFile(filename);
+	isComputing = false;
 }
 
 Mandelbrot::~Mandelbrot()
