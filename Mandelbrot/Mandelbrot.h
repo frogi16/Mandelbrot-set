@@ -40,11 +40,12 @@ private:
 	void startThread();
 	void clearFrame();
 	void exportCoordinates();
+	void exportImage();
 
 	std::shared_ptr<Button> undoButton, resetButton, generateButton, exportButton;
 	std::shared_ptr<StateButton> colorScheme;
-	std::shared_ptr<TextField> iterationsField;
-	std::shared_ptr<sf::Text> iterationsTitle, colorsTitle, loading;
+	std::shared_ptr<TextField> iterationsField, resolutionField;
+	std::shared_ptr<sf::Text> iterationsTitle, resolutionTitle, colorsTitle, loading;
 
 	std::vector<std::shared_ptr<Button>> buttons;
 	std::vector<std::shared_ptr<StateButton>> stateButtons;

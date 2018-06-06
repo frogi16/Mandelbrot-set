@@ -24,7 +24,7 @@ void Mandelbrot::init()
 	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height - 2, desktop.height);
 	currentView.resolution = graphDimensions.width;
 
-	result.create(currentView.resolution, currentView.resolution, sf::Color::White);
+	result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 	resultSprite.setPosition(graphDimensions.left, graphDimensions.top);
 
 	arial.loadFromFile("arial.ttf");
@@ -40,13 +40,20 @@ void Mandelbrot::init()
 
 	colorScheme = std::make_shared<StateButton>(sf::IntRect(160, 100, 40, 40));
 	iterationsField = std::make_shared<TextField>(sf::IntRect(20, 100, 120, 40), FieldType::Number, "128", 1);
+	resolutionField = std::make_shared<TextField>(sf::IntRect(20, 160, 120, 40), FieldType::Number, std::to_string(graphDimensions.width), 1);
 	stateButtons.push_back(colorScheme);
 	textFields.push_back(iterationsField);
+	textFields.push_back(resolutionField);
 
 	iterationsTitle = std::make_shared<sf::Text>("Iterations:", arial, 16);
 	iterationsTitle->setColor(sf::Color::Black);
 	iterationsTitle->setPosition(20, 80);
 	texts.push_back(iterationsTitle);
+
+	resolutionTitle = std::make_shared<sf::Text>("Resolution:", arial, 16);
+	resolutionTitle->setColor(sf::Color::Black);
+	resolutionTitle->setPosition(20, 140);
+	texts.push_back(resolutionTitle);
 
 	colorsTitle = std::make_shared<sf::Text>("Color:", arial, 16);
 	colorsTitle->setColor(sf::Color::Black);
@@ -67,6 +74,7 @@ void Mandelbrot::init()
 	radiusText.setPosition(0, 30);
 	radiusText.setCharacterSize(24);
 
+	previousView = currentView;
 	defaultView = currentView;		//needed to reset settings
 	nextView = currentView;
 	startThread();
@@ -95,6 +103,7 @@ void Mandelbrot::loop()
 		{
 			resultTexture.loadFromImage(result);
 			resultSprite.setTexture(resultTexture, true);
+			resultSprite.setScale(graphDimensions.height / resultSprite.getLocalBounds().height, graphDimensions.height / resultSprite.getLocalBounds().height);
 			isComputed = false;
 		}
 
@@ -217,6 +226,12 @@ void Mandelbrot::handleClicks()
 		nextView.color = colorScheme->getState();
 		nextView.iterations = iterationsField->getValueInt();
 
+		if (resolutionField->getValueInt() != nextView.resolution)
+		{
+			nextView.resolution = resolutionField->getValueInt();
+			result.create(nextView.resolution, nextView.resolution, sf::Color::Black);
+		}
+
 		previousView = std::move(currentView);
 		currentView = std::move(nextView);
 
@@ -227,6 +242,7 @@ void Mandelbrot::handleClicks()
 	if (exportButton->clicked())
 	{
 		exportCoordinates();
+		exportImage();
 	}
 }
 
@@ -257,7 +273,7 @@ void Mandelbrot::draw()
 
 	if (isComputing)
 		window.draw(*loading);
-
+	
 	window.draw(resultSprite);
 	window.draw(centerText);
 	window.draw(radiusText);
@@ -360,6 +376,11 @@ void Mandelbrot::exportCoordinates()
 	std::fstream out("out.txt", std::ios::app);
 	out << currentView.center.x << " " << currentView.center.y << " " << currentView.radius << "\n";
 	out.close();
+}
+
+void Mandelbrot::exportImage()
+{
+	result.saveToFile("out.png");
 }
 
 Mandelbrot::~Mandelbrot()
