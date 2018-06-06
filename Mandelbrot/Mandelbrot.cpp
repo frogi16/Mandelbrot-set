@@ -104,10 +104,6 @@ void Mandelbrot::loop()
 			{
 				pixelCenter.x = mouse.getPosition().x;
 				pixelCenter.y = mouse.getPosition().y;
-
-				mandelbrotSection.x = x;		//left top corner
-				mandelbrotSection.y = y;
-
 				clickedLeft = false;
 				selectedCenter = true;
 				nextView.center.x = x;
@@ -116,22 +112,20 @@ void Mandelbrot::loop()
 
 			if (selectedCenter)
 			{
-				int distance = std::max(mouse.getPosition().x - pixelCenter.x, mouse.getPosition().y - pixelCenter.y);
-				radiusFrame[0].position = sf::Vector2f(pixelCenter.x, pixelCenter.y);
-				radiusFrame[1].position = sf::Vector2f(pixelCenter.x + distance, pixelCenter.y);
+				int distance = hypot(mouse.getPosition().x - pixelCenter.x, mouse.getPosition().y - pixelCenter.y);
+				radiusFrame[0].position = sf::Vector2f(pixelCenter.x - distance, pixelCenter.y - distance);
+				radiusFrame[1].position = sf::Vector2f(pixelCenter.x + distance, pixelCenter.y - distance);
 				radiusFrame[2].position = sf::Vector2f(pixelCenter.x + distance, pixelCenter.y + distance);
-				radiusFrame[3].position = sf::Vector2f(pixelCenter.x, pixelCenter.y + distance);
-				radiusFrame[4].position = sf::Vector2f(pixelCenter.x, pixelCenter.y);
+				radiusFrame[3].position = sf::Vector2f(pixelCenter.x - distance, pixelCenter.y + distance);
+				radiusFrame[4].position = sf::Vector2f(pixelCenter.x - distance, pixelCenter.y - distance);
 
-				radiusText.setString("Radius: " + std::to_string(distance / float(graphDimensions.width)*currentView.radius));
+				radiusText.setString("Radius: " + std::to_string(distance / float(graphDimensions.width)*currentView.radius * 2));
 
 				if (!mouse.isButtonPressed(sf::Mouse::Button::Left) && clickedLeft)
 				{
 					clickedLeft = false;
 					selectedCenter = false;
-					nextView.center.x = currentView.center.x - currentView.radius + currentView.radius * 2 / float(graphDimensions.width)* (pixelCenter.x - graphDimensions.left + distance / 2.0f);
-					nextView.center.y = currentView.center.y - currentView.radius + currentView.radius * 2 / float(graphDimensions.height)* (pixelCenter.y - graphDimensions.top + distance / 2.0f);
-					nextView.radius = distance / float(graphDimensions.width)*currentView.radius;
+					nextView.radius = distance / float(graphDimensions.width)*currentView.radius * 2;
 				}
 				if (mouse.isButtonPressed(sf::Mouse::Button::Left))
 					clickedLeft = true;
@@ -269,7 +263,7 @@ void Mandelbrot::compute(View & settings)
 {
 	int iMax = settings.iterations;
 	double unit = 2 * settings.radius / (double)settings.resolution;
-
+	
 	for (int stepY = 0; stepY < settings.resolution; stepY++)
 	{
 		for (int stepX = 0; stepX < settings.resolution; stepX++)
