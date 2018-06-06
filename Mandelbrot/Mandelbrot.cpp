@@ -96,7 +96,7 @@ void Mandelbrot::loop()
 		sf::Time elapsedTime = clock.restart();
 		sf::Event event;
 		sf::Mouse mouse;
-
+		auto global = resultSprite.getGlobalBounds();
 		handleEvents(event);
 
 		if (isComputed)
@@ -207,6 +207,7 @@ void Mandelbrot::handleClicks()
 		iterationsField->setString(std::to_string(previousView.iterations));
 		std::swap(currentView, previousView);
 
+		adjustResolution();
 		startThread();
 		clearFrame();
 	}
@@ -217,6 +218,7 @@ void Mandelbrot::handleClicks()
 		previousView = std::move(currentView);
 		currentView = defaultView;
 
+		adjustResolution();
 		startThread();
 		clearFrame();
 	}
@@ -225,16 +227,10 @@ void Mandelbrot::handleClicks()
 	{
 		nextView.color = colorScheme->getState();
 		nextView.iterations = iterationsField->getValueInt();
-
-		if (resolutionField->getValueInt() != nextView.resolution)
-		{
-			nextView.resolution = resolutionField->getValueInt();
-			result.create(nextView.resolution, nextView.resolution, sf::Color::Black);
-		}
-
 		previousView = std::move(currentView);
 		currentView = std::move(nextView);
 
+		adjustResolution();
 		startThread();
 		clearFrame();
 	}
@@ -350,6 +346,15 @@ void Mandelbrot::compute(View & settings)
 	}
 	isComputed = true;
 	isComputing = false;
+}
+
+void Mandelbrot::adjustResolution()
+{
+	if (resolutionField->getValueInt() != currentView.resolution)
+	{
+		currentView.resolution = resolutionField->getValueInt();
+		result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
+	}
 }
 
 void Mandelbrot::startThread()

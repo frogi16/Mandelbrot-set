@@ -37,6 +37,7 @@ private:
 	void handleClicks();
 	void draw();
 	void compute(View &settings);
+	void adjustResolution();
 	void startThread();
 	void clearFrame();
 	void exportCoordinates();
