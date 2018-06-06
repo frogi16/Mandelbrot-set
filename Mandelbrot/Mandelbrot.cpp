@@ -53,6 +53,10 @@ void Mandelbrot::init()
 	colorsTitle->setPosition(160, 80);
 	texts.push_back(colorsTitle);
 
+	loading = std::make_shared<sf::Text>("...", arial, 48);
+	loading->setColor(sf::Color::Black);
+	loading->setPosition(800, 120);
+
 	centerText.setFont(arial);
 	centerText.setColor(sf::Color::Black);
 	centerText.setPosition(0, 0);
@@ -251,6 +255,9 @@ void Mandelbrot::draw()
 		window.draw(*i);
 	}
 
+	if (isComputing)
+		window.draw(*loading);
+
 	window.draw(resultSprite);
 	window.draw(centerText);
 	window.draw(radiusText);
@@ -326,13 +333,18 @@ void Mandelbrot::compute(View & settings)
 		}
 	}
 	isComputed = true;
+	isComputing = false;
 }
 
 void Mandelbrot::startThread()
 {
-	isComputed = false;
-	computing = std::thread(&Mandelbrot::compute, this, currentView);
-	computing.detach();
+	if (!isComputing)
+	{
+		isComputing = true;
+		isComputed = false;
+		computing = std::thread(&Mandelbrot::compute, this, currentView);
+		computing.detach();
+	}
 }
 
 void Mandelbrot::clearFrame()

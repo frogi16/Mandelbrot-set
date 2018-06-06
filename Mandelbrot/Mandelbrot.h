@@ -44,7 +44,7 @@ private:
 	std::shared_ptr<Button> undoButton, resetButton, generateButton, exportButton;
 	std::shared_ptr<StateButton> colorScheme;
 	std::shared_ptr<TextField> iterationsField;
-	std::shared_ptr<sf::Text> iterationsTitle, colorsTitle;
+	std::shared_ptr<sf::Text> iterationsTitle, colorsTitle, loading;
 
 	std::vector<std::shared_ptr<Button>> buttons;
 	std::vector<std::shared_ptr<StateButton>> stateButtons;
@@ -56,7 +56,7 @@ private:
 		currentView,		//export
 		nextView;			//temporary storage
 
-	bool isComputed = false, selectedCenter = false, clickedLeft = false, closeApplication = false;
+	bool isComputing = false, isComputed = false, selectedCenter = false, clickedLeft = false, closeApplication = false;
 
 	sf::VideoMode desktop;
 	sf::RenderWindow window;
