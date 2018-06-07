@@ -1,11 +1,6 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-
-#include "TextField.h"
-#include "StateButton.h"
-#include "Button.h"
+#include "ViewExplorer.h"
 
 #define _USE_MATH_DEFINES
 
@@ -14,14 +9,6 @@
 #include <thread>
 #include <complex>
 #include <math.h>
-
-struct View		//this structure is a legacy after ther original way of generating the Mandelbrot set and I decided to leave it as it is. Change it only after extensive rebuilding of Mandelbrot::compute(...) and selection system.
-{
-	int resolution{ 768 }, iterations{ 128 };
-	double radius{ 2 };		//half of the side of the square
-	sf::Vector2<double> center{ -0.5, 0 };
-	char color{ 'R' };
-};
 
 class Mandelbrot
 {
@@ -42,7 +29,7 @@ private:
 	void adjustResolution();
 	void startThread();
 	void clearFrame();
-	void exportCoordinates(std::string filename) const;
+	void exportView(std::string filename) const;
 	void exportImage(std::string filename);
 
 	std::shared_ptr<Button> undoButton, resetButton, generateButton, exportButton;
@@ -54,6 +41,8 @@ private:
 	std::vector<std::shared_ptr<StateButton>> stateButtons;
 	std::vector<std::shared_ptr<TextField>> textFields;
 	std::vector<std::shared_ptr<sf::Text>> texts;
+
+	std::unique_ptr<ViewExplorer> viewExplorer;
 
 	View defaultView,		//reset 
 		previousView,		//undo

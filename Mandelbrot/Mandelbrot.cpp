@@ -44,6 +44,8 @@ void Mandelbrot::init()
 
 	arial.loadFromFile("arial.ttf");
 
+	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, settingsDimensions.top - 400));
+
 	undoButton = std::make_shared<Button>(sf::IntRect(220, 100, 120, 40), "Undo");
 	resetButton = std::make_shared<Button>(sf::IntRect(360, 100, 120, 40), "Reset");
 	exportButton = std::make_shared<Button>(sf::IntRect(220, 160, 120, 40), "Export");
@@ -118,7 +120,7 @@ void Mandelbrot::loop()
 		sf::Time elapsedTime = clock.restart();
 		sf::Event event;
 		sf::Mouse mouse;
-		auto global = resultSprite.getGlobalBounds();
+
 		handleEvents(event);
 
 		if (isComputed)
@@ -262,7 +264,7 @@ void Mandelbrot::handleClicks()
 		if (!isComputing)
 		{
 			isComputing = true;
-			exportCoordinates(filenameField->getValueString()+".txt");
+			exportView(filenameField->getValueString()+".txt");
 			exporting = std::thread(&Mandelbrot::exportImage, this, filenameField->getValueString() + ".png");
 			exporting.detach();
 		}
@@ -297,6 +299,7 @@ void Mandelbrot::draw()
 	if (isComputing)
 		window.draw(*loading);
 	
+	viewExplorer->draw(window);
 	window.draw(resultSprite);
 	window.draw(centerText);
 	window.draw(radiusText);
@@ -403,10 +406,10 @@ void Mandelbrot::clearFrame()
 	}
 }
 
-void Mandelbrot::exportCoordinates(std::string filename) const
+void Mandelbrot::exportView(std::string filename) const
 {
 	std::fstream out(filename, std::ios::app);
-	out << currentView.center.x << " " << currentView.center.y << " " << currentView.radius << "\n";
+	out << currentView.getFullString();
 	out.close();
 }
 
