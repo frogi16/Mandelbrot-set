@@ -9,9 +9,24 @@ Mandelbrot::Mandelbrot()
 
 void Mandelbrot::init(int argc, char ** argv)
 {
-	currentView.center.x = std::stod(argv[1]);
-	currentView.center.y = std::stod(argv[2]);
-	currentView.radius = std::stod(argv[3]);
+	if (argc == 4)		//direct parameters
+	{
+		currentView.center.x = std::stod(argv[1]);
+		currentView.center.y = std::stod(argv[2]);
+		currentView.radius = std::stod(argv[3]);
+	}
+	else if (argc == 2)		//path to file with parameters
+	{
+		std::fstream in(argv[1], std::ios_base::in);
+		double temp;
+		in >> temp;
+		currentView.center.x = temp;
+		in >> temp;
+		currentView.center.y = temp;
+		in >> temp;
+		currentView.radius = temp;
+	}
+
 	init();
 }
 

@@ -15,7 +15,7 @@
 #include <complex>
 #include <math.h>
 
-struct View
+struct View		//this structure is a legacy after ther original way of generating the Mandelbrot set and I decided to leave it as it is. Change it only after extensive rebuilding of Mandelbrot::compute(...) and selection system.
 {
 	int resolution{ 768 }, iterations{ 128 };
 	double radius{ 2 };		//half of the side of the square
@@ -27,11 +27,13 @@ class Mandelbrot
 {
 public:
 	Mandelbrot();
-	void init(int argc, char** argv);
-	void init();
+	Mandelbrot(const Mandelbrot&) = delete; // non construction-copyable
+	Mandelbrot& operator=(const Mandelbrot&) = delete; // non copyable
+	void init(const int argc, char** const argv);
 	void loop();
 	~Mandelbrot();
 private:
+	void init();
 	void handleEvents(sf::Event &event);
 	void update(sf::Mouse &mouse);
 	void handleClicks();

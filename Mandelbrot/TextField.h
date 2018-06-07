@@ -24,7 +24,7 @@ public:
 	void setString(std::string string) { contentText.setString(string);	actualizeText(); }
 	void showError();
 	std::string getValueString();
-	int getValueInt() { std::string temp = contentText.getString(); return std::atoi(temp.c_str()); }
+	int getValueInt() const { std::string temp = contentText.getString(); return std::atoi(temp.c_str()); }
 private:
 	sf::Clock errorTimer;
 	sf::Time errorTime;
