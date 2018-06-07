@@ -60,7 +60,7 @@ void TextField::eraseCharacter()
 
 void TextField::draw(sf::RenderTarget & target)
 {
-	if (errorTimer.getElapsedTime().asSeconds()>errorTime.asSeconds())
+	if (errorTimer.getElapsedTime().asSeconds() > errorTime.asSeconds())
 	{
 		box.setOutlineColor(sf::Color::Black);
 	}
@@ -95,6 +95,17 @@ bool TextField::isTypeMatching(sf::Event & event)
 			return false;
 		}
 	}
+	else if (type == FieldType::WindowsFilename)
+	{
+		if (event.text.unicode == '/' || event.text.unicode == '\\' || event.text.unicode == ':' || event.text.unicode == '*' || event.text.unicode == '?' || event.text.unicode == '"' || event.text.unicode == '>' || event.text.unicode == '<')
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
 	else
 	{
 		return true;
@@ -106,7 +117,7 @@ void TextField::actualizeText()
 	std::string cutted;
 	bool isCutted = false;
 
-	while(contentText.getLocalBounds().width > dimensions.width)
+	while (contentText.getLocalBounds().width > dimensions.width)
 	{
 		cutted.push_back(contentText.getString().toAnsiString().back());
 		std::string newString = contentText.getString();
@@ -124,6 +135,6 @@ void TextField::actualizeText()
 	contentText.setOrigin(contentText.getLocalBounds().left + contentText.getLocalBounds().width / 2, contentText.getLocalBounds().top + contentText.getLocalBounds().height / 2);	//center the origin point
 	contentText.setPosition(box.getPosition().x + box.getSize().x / 2, box.getPosition().y + box.getSize().y / 2);	//set the text's origin's position exactly as box's origin's position
 
-	if(contentText.getLocalBounds().width > dimensions.width)
+	if (contentText.getLocalBounds().width > dimensions.width)
 		actualizeText();
 }

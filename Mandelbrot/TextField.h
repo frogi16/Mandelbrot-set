@@ -8,6 +8,7 @@
 enum class FieldType
 {
 	Number,
+	WindowsFilename,
 	All
 };
 

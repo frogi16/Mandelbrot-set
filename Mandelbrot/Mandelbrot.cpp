@@ -41,7 +41,7 @@ void Mandelbrot::init()
 	colorScheme = std::make_shared<StateButton>(sf::IntRect(160, 100, 40, 40));
 	iterationsField = std::make_shared<TextField>(sf::IntRect(20, 100, 120, 40), FieldType::Number, "128", 1);
 	resolutionField = std::make_shared<TextField>(sf::IntRect(20, 160, 120, 40), FieldType::Number, std::to_string(graphDimensions.width), 1);
-	filenameField = std::make_shared<TextField>(sf::IntRect(20, 220, 460, 40), FieldType::All, "", 1);
+	filenameField = std::make_shared<TextField>(sf::IntRect(20, 220, 460, 40), FieldType::WindowsFilename, "", 1);
 	stateButtons.push_back(colorScheme);
 	textFields.push_back(iterationsField);
 	textFields.push_back(resolutionField);
