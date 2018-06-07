@@ -48,7 +48,7 @@ void TextField::eraseCharacter()
 {
 	if (isActive)
 	{
-		std::string temp = contentText.getString();
+		std::wstring temp = contentText.getString();
 
 		if (temp.size() > 0)
 		{
