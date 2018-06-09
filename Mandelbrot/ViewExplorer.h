@@ -39,6 +39,7 @@ struct ViewRepresentation
 	std::string name = {};
 	sf::Texture previewTexture = {};
 	sf::Sprite previewSprite = {};
+	sf::Text nameText = {};
 };
 
 class ViewExplorer
@@ -56,8 +57,12 @@ private:
 	void loadViewData(std::string filename);
 	void loadViewImage(std::string filename);
 	void orderSprites();
+	sf::Vector2f centerIn(sf::FloatRect centeredObject, sf::FloatRect area) const;
 	sf::Vector2f toLocalCoordinates(sf::Vector2f glob) { return sf::Vector2f{ glob.x - dimensions.width, glob.y - dimensions.height }; }
 	sf::IntRect dimensions;
 	std::vector<ViewRepresentation> represesentations;
+	sf::RenderTexture explorerTexture;
+	sf::Sprite explorerSprite;
+	sf::Font arial;
 };
 

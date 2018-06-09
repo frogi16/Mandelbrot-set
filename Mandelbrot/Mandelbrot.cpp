@@ -36,7 +36,7 @@ void Mandelbrot::init()
 	window.create(sf::VideoMode(desktop.width, desktop.height), "Mandelbrot", sf::Style::Fullscreen);
 
 	graphDimensions = sf::IntRect(desktop.width - desktop.height, 0, desktop.height, desktop.height);
-	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height - 2, desktop.height);
+	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height - 2, 400);
 	currentView.resolution = graphDimensions.width;
 
 	result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
@@ -44,7 +44,7 @@ void Mandelbrot::init()
 
 	arial.loadFromFile("arial.ttf");
 
-	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, settingsDimensions.top - 400));
+	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, desktop.height - 400));
 
 	undoButton = std::make_shared<Button>(sf::IntRect(220, 100, 120, 40), "Undo");
 	resetButton = std::make_shared<Button>(sf::IntRect(360, 100, 120, 40), "Reset");
