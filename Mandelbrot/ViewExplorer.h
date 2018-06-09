@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
@@ -57,8 +59,15 @@ private:
 	void loadViewData(std::string filename);
 	void loadViewImage(std::string filename);
 	void orderSprites();
+	void setNameTextProperties(sf::Text &nameText, sf::FloatRect &area, std::string &name);
+	bool previewExists(const std::string &name);
 	sf::Vector2f centerIn(sf::FloatRect centeredObject, sf::FloatRect area) const;
-	sf::Vector2f toLocalCoordinates(sf::Vector2f glob) { return sf::Vector2f{ glob.x - dimensions.width, glob.y - dimensions.height }; }
+	sf::Vector2f toLocalCoordinates(sf::Vector2f glob) { return sf::Vector2f{ glob.x - dimensions.left, glob.y - dimensions.top }; }
+	sf::Vector2i toLocalCoordinates(sf::Vector2i glob) { return sf::Vector2i{ glob.x - dimensions.left, glob.y - dimensions.top }; }
+
+	std::shared_ptr<Button> reloadButton;
+	std::vector<std::shared_ptr<Button>> buttons;
+
 	sf::IntRect dimensions;
 	std::vector<ViewRepresentation> represesentations;
 	sf::RenderTexture explorerTexture;

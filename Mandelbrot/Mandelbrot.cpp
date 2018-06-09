@@ -222,6 +222,8 @@ void Mandelbrot::update(sf::Mouse &mouse)
 	{
 		i->updateMouse(mouse);
 	}
+
+	viewExplorer->handleMouse(mouse);
 }
 
 void Mandelbrot::handleClicks()

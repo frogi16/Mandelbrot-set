@@ -10,12 +10,30 @@ ViewExplorer::ViewExplorer(sf::IntRect dimen) : dimensions(dimen), columns(3)
 	arial.loadFromFile("arial.ttf");
 	explorerTexture.create(dimensions.width, dimensions.height);
 	explorerSprite.setPosition(dimensions.left, dimensions.top);
+
+	reloadButton = std::make_shared<Button>(sf::IntRect(dimensions.left + dimensions.width - 90, 10, 80, 40), "Reload");
+	buttons.push_back(reloadButton);
+
 	loadViews();
 	orderSprites();
 }
 
 void ViewExplorer::handleMouse(sf::Mouse mouse)
 {
+	//this class draws all of its components on RenderTexture using texture's local coordinates and for this reason proper handling of mouse events requires translating mouse coordinates to local systen
+
+	sf::Vector2i localMouse = toLocalCoordinates(mouse.getPosition());
+
+	for (auto& i : buttons)
+	{
+		i->updateMouse(localMouse, mouse.isButtonPressed(sf::Mouse::Button::Left));
+	}
+
+	if (reloadButton->clicked())
+	{
+		loadViews();
+		orderSprites();
+	}
 }
 
 void ViewExplorer::draw(sf::RenderTarget & target)
@@ -27,6 +45,11 @@ void ViewExplorer::draw(sf::RenderTarget & target)
 	{
 		explorerTexture.draw(i.previewSprite);
 		explorerTexture.draw(i.nameText);
+	}
+
+	for (auto& i : buttons)
+	{
+		i->draw(explorerTexture);
 	}
 
 	explorerTexture.display();
@@ -44,7 +67,13 @@ void ViewExplorer::loadViews()
 	{
 		if (i.path().extension() == ".txt")
 		{
-			loadViewData(i.path().filename().generic_string());		//using these long namespaces and types is tiring and one day "experimental" namespace will be removed, so I converted it to standard string at the first opportunity. If implementation changes it will require changes only in this function (I hope)
+			std::string name = i.path().filename().generic_string();		//cut extension
+			name.erase(name.end() - 4, name.end());
+
+			if (!previewExists(name))
+			{
+				loadViewData(i.path().filename().generic_string());		//using these long namespaces and types is tiring and one day "experimental" namespace will be removed, so I converted it to standard string at the first opportunity. If implementation changes it will require changes only in this function (I hope)
+			}
 		}
 	}
 
@@ -74,8 +103,6 @@ void ViewExplorer::loadViewData(std::string filename)
 
 	filename.erase(filename.end() - 4, filename.end());		//cut.png
 	ViewRepresentation temp{ View{values}, filename };
-	temp.nameText.setCharacterSize(20);
-	temp.nameText.setString(filename);
 	represesentations.push_back(std::move(temp));
 }
 
@@ -88,7 +115,10 @@ void ViewExplorer::loadViewImage(std::string filename)
 	{
 		if (i.name == name)		//found linked data
 		{
-			i.previewTexture.loadFromFile(filename);
+			if (i.previewTexture.getSize().x == 0)		//texture not found
+			{
+				i.previewTexture.loadFromFile(filename);
+			}
 		}
 	}
 }
@@ -116,11 +146,29 @@ void ViewExplorer::orderSprites()
 		sprite.setTexture(represesentations[i].previewTexture);
 		sprite.setScale(newScale, newScale);
 		sprite.setPosition(margin + columnWidth*actualColumn + previewMargin, margin + columnWidth*actualRow + previewMargin);
+		
 		sf::FloatRect textArea{ sprite.getGlobalBounds().left, sprite.getGlobalBounds().top + sprite.getGlobalBounds().height, sprite.getGlobalBounds().width, nameHeight };		//area which contains name of representation
-		represesentations[i].nameText.setFont(arial);
-		represesentations[i].nameText.setColor(sf::Color::Black);
-		represesentations[i].nameText.setPosition(centerIn(represesentations[i].nameText.getLocalBounds(), textArea));
+		setNameTextProperties(represesentations[i].nameText, textArea, represesentations[i].name);
 	}
+}
+
+void ViewExplorer::setNameTextProperties(sf::Text & nameText, sf::FloatRect &area, std::string &name)
+{
+	nameText.setFont(arial);
+	nameText.setColor(sf::Color::Black);
+	nameText.setCharacterSize(20);
+	nameText.setString(name);
+	nameText.setPosition(centerIn(nameText.getLocalBounds(), area));
+}
+
+bool ViewExplorer::previewExists(const std::string & name)
+{
+	for (auto& i : represesentations)
+	{
+		if (i.name == name)
+			return true;
+	}
+	return false;
 }
 
 sf::Vector2f ViewExplorer::centerIn(sf::FloatRect centeredObject, sf::FloatRect area) const

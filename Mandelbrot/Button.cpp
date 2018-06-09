@@ -11,7 +11,7 @@ Button::Button(sf::IntRect dimensions, std::string text) :
 	buttonText.setFont(arial);
 	buttonText.setString(text);
 	buttonText.setColor(sf::Color::Black);
-	buttonText.setCharacterSize(dimensions.height/2);
+	buttonText.setCharacterSize(dimensions.height / 2);
 
 	button.setPosition(dimensions.left, dimensions.top);
 	button.setFillColor(sf::Color::White);
@@ -28,9 +28,14 @@ Button::~Button()
 
 void Button::updateMouse(const sf::Mouse & mouse)
 {
-	bool isHovered = (button.getGlobalBounds().contains(sf::Vector2f(mouse.getPosition().x, mouse.getPosition().y)));
+	updateMouse(mouse.getPosition(), mouse.isButtonPressed(sf::Mouse::Button::Left));
+}
 
-	if (isGrabbed&&!mouse.isButtonPressed(sf::Mouse::Button::Left))
+void Button::updateMouse(sf::Vector2i mousePosition, bool isLeftPressed)
+{
+	bool isHovered = (button.getGlobalBounds().contains(sf::Vector2f(mousePosition.x, mousePosition.y)));
+
+	if (isGrabbed && !isLeftPressed)
 	{
 		isClicked = true;
 	}
@@ -39,7 +44,7 @@ void Button::updateMouse(const sf::Mouse & mouse)
 		isClicked = false;
 	}
 
-	if (isHovered&&mouse.isButtonPressed(sf::Mouse::Button::Left))
+	if (isHovered && isLeftPressed)
 	{
 		isGrabbed = true;
 	}
