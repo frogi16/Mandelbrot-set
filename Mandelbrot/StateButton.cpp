@@ -58,6 +58,18 @@ void StateButton::draw(sf::RenderTarget & target)
 	target.draw(buttonText);
 }
 
+void StateButton::changeState(const char target)
+{
+	int i = 0;
+
+	while (target!=states[i])
+	{
+		buttonState = i;
+	}
+
+	updateText();
+}
+
 void StateButton::changeState()
 {
 	if (buttonState == 2)
@@ -69,6 +81,11 @@ void StateButton::changeState()
 		buttonState++;
 	}
 
+	updateText();
+}
+
+void StateButton::updateText()
+{
 	buttonText.setString(states[buttonState]);
 	buttonText.setOrigin(buttonText.getLocalBounds().left + buttonText.getLocalBounds().width / 2, buttonText.getLocalBounds().top + buttonText.getLocalBounds().height / 2);	//center the origin point
 	buttonText.setPosition(button.getPosition().x + button.getSize().x / 2, button.getPosition().y + button.getSize().y / 2);	//set the text's origin's position exactly as box's origin's position

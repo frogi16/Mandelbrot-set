@@ -186,6 +186,8 @@ void Mandelbrot::changeCurrentView(const View & data, const sf::Texture & previe
 	currentView = data;
 	iterationsField->setString(std::to_string(currentView.iterations));
 	resolutionField->setString(std::to_string(currentView.resolution));
+	colorScheme->changeState(currentView.color);
+	
 	resultTexture = previewTexture;
 	resultSprite.setTexture(resultTexture, true);
 	scaleResultSprite();
@@ -403,8 +405,8 @@ void Mandelbrot::adjustResolution()
 	if (resolutionField->getValueInt() != currentView.resolution)
 	{
 		currentView.resolution = resolutionField->getValueInt();
-		result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 	}
+	result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 }
 
 void Mandelbrot::scaleResultSprite()
