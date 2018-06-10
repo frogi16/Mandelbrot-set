@@ -1,16 +1,17 @@
 #include "ViewExplorer.h"
+#include "Mandelbrot.h"
 
 #include <fstream>
 #include <sstream>
 #include <filesystem>
 #include <iostream>
 
-ViewExplorer::ViewExplorer(sf::IntRect dimen) : dimensions(dimen), columns(3)
+ViewExplorer::ViewExplorer(sf::IntRect dimen, Mandelbrot& own) : dimensions(dimen), columns(3), owner(own)
 {
 	arial.loadFromFile("arial.ttf");
 	explorerTexture.create(dimensions.width, dimensions.height);
 	explorerSprite.setPosition(dimensions.left, dimensions.top);
-
+	
 	reloadButton = std::make_shared<Button>(sf::IntRect(dimensions.left + dimensions.width - 90, 10, 80, 40), "Reload");
 	buttons.push_back(reloadButton);
 
@@ -22,19 +23,36 @@ void ViewExplorer::handleMouse(sf::Mouse mouse)
 {
 	//this class draws all of its components on RenderTexture using texture's local coordinates and for this reason proper handling of mouse events requires translating mouse coordinates to local systen
 
-	sf::Vector2i localMouse = toLocalCoordinates(mouse.getPosition());
+	sf::Vector2i localMouse = toLocalCoordinates(mouse.getPosition() + sf::Vector2i{ 0, scrollPosition });
 
 	for (auto& i : buttons)
 	{
 		i->updateMouse(localMouse, mouse.isButtonPressed(sf::Mouse::Button::Left));
 	}
 
+	bool grabbed = false;
+	for (auto& i : represesentations)
+	{
+		if (i.dimensions.contains(localMouse.x, localMouse.y) && mouse.isButtonPressed(sf::Mouse::Button::Left))		//grab
+		{
+			grabbedRepresentation = &i;
+			grabbed = true;
+		}
+		else if (i.dimensions.contains(localMouse.x, localMouse.y) && grabbedRepresentation == (&i) && !mouse.isButtonPressed(sf::Mouse::Button::Left))		//select
+		{
+			selectedRepresentation = &i;
+			selectedFrame.setPosition(selectedRepresentation->dimensions.left, selectedRepresentation->dimensions.top);
+			owner.changeCurrentView(selectedRepresentation->data, selectedRepresentation->previewTexture);
+		}
+	}
+	if (!grabbed)
+		grabbedRepresentation = nullptr;
+
 	if (reloadButton->clicked())
 	{
 		loadViews();
 		orderSprites();
 	}
-
 
 }
 
@@ -47,7 +65,7 @@ void ViewExplorer::scroll(sf::Event event)
 		scrollPosition += event.mouseWheelScroll.delta*coefficient;
 
 		scrollPosition = (scrollPosition < 0) ? 0 : scrollPosition;		//checking range
-		scrollPosition = (scrollPosition > realHeight-dimensions.height) ? realHeight - dimensions.height : scrollPosition;
+		scrollPosition = (scrollPosition > realHeight - dimensions.height) ? realHeight - dimensions.height : scrollPosition;
 	}
 }
 
@@ -55,6 +73,9 @@ void ViewExplorer::draw(sf::RenderTarget & target)
 {
 	explorerTexture.clear(sf::Color(220, 220, 220));
 	auto size = explorerTexture.getSize();
+
+	if (selectedRepresentation)
+		explorerTexture.draw(selectedFrame);
 
 	for (auto& i : represesentations)
 	{
@@ -74,7 +95,7 @@ void ViewExplorer::draw(sf::RenderTarget & target)
 	{
 		explorerSprite.setTextureRect(sf::IntRect{ dimensions.left, scrollPosition, dimensions.width, dimensions.height });
 	}
-	
+
 	target.draw(explorerSprite);
 }
 
@@ -120,7 +141,6 @@ void ViewExplorer::loadViewData(std::string filename)
 		buffer >> temp;
 		values.push_back(std::move(temp));
 	}
-	values.pop_back();		//the last one is always empty. Probably can be more elegant. TODO
 
 	filename.erase(filename.end() - 4, filename.end());		//cut.png
 	ViewRepresentation temp{ View{values}, filename };
@@ -149,12 +169,15 @@ void ViewExplorer::orderSprites()
 	constexpr int margin = 30;		//every side
 	constexpr float nameHeight = 40;
 	int columnWidth = (dimensions.width - 2 * margin) / float(columns);
+	int columnHeight = columnWidth + nameHeight;
 	int previewWidth = columnWidth * 0.8f;
 	int previewMargin = columnWidth * 0.1f;
 
+	setSelectedFrameProperties(columnWidth, columnHeight);
+
 	if (represesentations.size() > 0)
 	{
-		realHeight = margin * 2 + ((represesentations.size() - 1) / columns + 1)*columnWidth;
+		realHeight = margin * 2 + ((represesentations.size() - 1) / columns + 1)*columnHeight;
 		scrollable = (realHeight > dimensions.height) ? true : false;
 
 		if (scrollable)
@@ -165,16 +188,19 @@ void ViewExplorer::orderSprites()
 
 	for (size_t i = 0; i < represesentations.size(); i++)
 	{
-		float newScale = previewWidth / float(represesentations[0].previewTexture.getSize().x);
-		int actualColumn = i%columns;
+		float newScale = previewWidth / float(represesentations[i].previewTexture.getSize().x);
+		int actualColumn = i % columns;
 		int actualRow = i / columns;
+
 		auto &sprite = represesentations[i].previewSprite;
 		sprite.setTexture(represesentations[i].previewTexture);
 		sprite.setScale(newScale, newScale);
-		sprite.setPosition(margin + columnWidth*actualColumn + previewMargin, margin + columnWidth*actualRow + previewMargin);
-		
+		sprite.setPosition(margin + columnWidth*actualColumn + previewMargin, margin + columnHeight*actualRow + previewMargin);
+
 		sf::FloatRect textArea{ sprite.getGlobalBounds().left, sprite.getGlobalBounds().top + sprite.getGlobalBounds().height, sprite.getGlobalBounds().width, nameHeight };		//area which contains name of representation
 		setNameTextProperties(represesentations[i].nameText, textArea, represesentations[i].name);
+
+		represesentations[i].dimensions = sf::IntRect{ margin + columnWidth*actualColumn, margin + columnHeight*actualRow, columnWidth, columnHeight };
 	}
 }
 
@@ -185,6 +211,12 @@ void ViewExplorer::setNameTextProperties(sf::Text & nameText, sf::FloatRect &are
 	nameText.setCharacterSize(20);
 	nameText.setString(name);
 	nameText.setPosition(centerIn(nameText.getLocalBounds(), area));
+}
+
+void ViewExplorer::setSelectedFrameProperties(int width, int height)
+{
+	selectedFrame.setSize(sf::Vector2f(width, height));
+	selectedFrame.setFillColor(sf::Color(200, 200, 200));
 }
 
 bool ViewExplorer::previewExists(const std::string & name)
@@ -199,8 +231,5 @@ bool ViewExplorer::previewExists(const std::string & name)
 
 sf::Vector2f ViewExplorer::centerIn(sf::FloatRect centeredObject, sf::FloatRect area) const
 {
-	if (area.width < centeredObject.width || area.height < centeredObject.height)
-		throw std::range_error("Object must be smaller than area");
-	else
-		return sf::Vector2f(area.left + (area.width - centeredObject.width) / 2, area.top + (area.height - centeredObject.height) / 2);
+	return sf::Vector2f(area.left + (area.width - centeredObject.width) / 2, area.top + (area.height - centeredObject.height) / 2);
 }

@@ -44,7 +44,7 @@ void Mandelbrot::init()
 
 	arial.loadFromFile("arial.ttf");
 
-	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, desktop.height - 400));
+	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, desktop.height - 400), *this);
 
 	undoButton = std::make_shared<Button>(sf::IntRect(220, 100, 120, 40), "Undo");
 	resetButton = std::make_shared<Button>(sf::IntRect(360, 100, 120, 40), "Reset");
@@ -127,7 +127,7 @@ void Mandelbrot::loop()
 		{
 			resultTexture.loadFromImage(result);
 			resultSprite.setTexture(resultTexture, true);
-			resultSprite.setScale(graphDimensions.height / resultSprite.getLocalBounds().height, graphDimensions.height / resultSprite.getLocalBounds().height);
+			scaleResultSprite();
 			isComputed = false;
 		}
 
@@ -178,6 +178,17 @@ void Mandelbrot::loop()
 		handleClicks();
 		draw();
 	}
+}
+
+void Mandelbrot::changeCurrentView(const View & data, const sf::Texture & previewTexture)
+{
+	previousView = std::move(currentView);
+	currentView = data;
+	iterationsField->setString(std::to_string(currentView.iterations));
+	resolutionField->setString(std::to_string(currentView.resolution));
+	resultTexture = previewTexture;
+	resultSprite.setTexture(resultTexture, true);
+	scaleResultSprite();
 }
 
 void Mandelbrot::handleEvents(sf::Event &event)
@@ -394,6 +405,11 @@ void Mandelbrot::adjustResolution()
 		currentView.resolution = resolutionField->getValueInt();
 		result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 	}
+}
+
+void Mandelbrot::scaleResultSprite()
+{
+	resultSprite.setScale(graphDimensions.height / resultSprite.getLocalBounds().height, graphDimensions.height / resultSprite.getLocalBounds().height);
 }
 
 void Mandelbrot::startThread()

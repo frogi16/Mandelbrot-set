@@ -18,6 +18,7 @@ public:
 	Mandelbrot& operator=(const Mandelbrot&) = delete; // non copyable
 	void init(const int argc, char** const argv);
 	void loop();
+	void changeCurrentView(const View &data, const sf::Texture & previewTexture);
 	~Mandelbrot();
 private:
 	void init();
@@ -27,6 +28,7 @@ private:
 	void draw();
 	void compute(const View &settings);
 	void adjustResolution();
+	void scaleResultSprite();
 	void startThread();
 	void clearFrame();
 	void exportView(std::string filename) const;
