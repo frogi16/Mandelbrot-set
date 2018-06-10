@@ -67,6 +67,7 @@ void StateButton::changeState(const char target)
 		i++;
 	}
 
+	buttonState = i;
 	updateText();
 }
 
