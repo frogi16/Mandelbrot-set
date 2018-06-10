@@ -34,6 +34,21 @@ void ViewExplorer::handleMouse(sf::Mouse mouse)
 		loadViews();
 		orderSprites();
 	}
+
+
+}
+
+void ViewExplorer::scroll(sf::Event event)
+{
+	if (scrollable)
+	{
+		constexpr float coefficient = -30;
+
+		scrollPosition += event.mouseWheelScroll.delta*coefficient;
+
+		scrollPosition = (scrollPosition < 0) ? 0 : scrollPosition;		//checking range
+		scrollPosition = (scrollPosition > realHeight-dimensions.height) ? realHeight - dimensions.height : scrollPosition;
+	}
 }
 
 void ViewExplorer::draw(sf::RenderTarget & target)
@@ -54,6 +69,12 @@ void ViewExplorer::draw(sf::RenderTarget & target)
 
 	explorerTexture.display();
 	explorerSprite.setTexture(explorerTexture.getTexture());
+
+	if (scrollable)
+	{
+		explorerSprite.setTextureRect(sf::IntRect{ dimensions.left, scrollPosition, dimensions.width, dimensions.height });
+	}
+	
 	target.draw(explorerSprite);
 }
 
@@ -131,15 +152,20 @@ void ViewExplorer::orderSprites()
 	int previewWidth = columnWidth * 0.8f;
 	int previewMargin = columnWidth * 0.1f;
 
-	float newScale;
-
 	if (represesentations.size() > 0)
 	{
-		newScale = previewWidth / float(represesentations[0].previewTexture.getSize().x);
+		realHeight = margin * 2 + ((represesentations.size() - 1) / columns + 1)*columnWidth;
+		scrollable = (realHeight > dimensions.height) ? true : false;
+
+		if (scrollable)
+		{
+			explorerTexture.create(dimensions.width, realHeight);		//scale to new size
+		}
 	}
 
 	for (size_t i = 0; i < represesentations.size(); i++)
 	{
+		float newScale = previewWidth / float(represesentations[0].previewTexture.getSize().x);
 		int actualColumn = i%columns;
 		int actualRow = i / columns;
 		auto &sprite = represesentations[i].previewSprite;

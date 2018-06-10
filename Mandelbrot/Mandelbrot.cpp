@@ -203,6 +203,13 @@ void Mandelbrot::handleEvents(sf::Event &event)
 				i->eraseCharacter();
 			}
 		}
+		else if(event.type==sf::Event::MouseWheelScrolled)
+		{
+			if (viewExplorer->getDimensions().contains(event.mouseWheelScroll.x, event.mouseWheelScroll.y))
+			{
+				viewExplorer->scroll(event);
+			}
+		}
 	}
 }
 
@@ -417,6 +424,7 @@ void Mandelbrot::exportView(std::string filename) const
 
 void Mandelbrot::exportImage(std::string filename)
 {
+	
 	result.saveToFile(filename);
 	isComputing = false;
 }

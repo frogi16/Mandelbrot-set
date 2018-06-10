@@ -51,7 +51,9 @@ public:
 	ViewExplorer(const ViewExplorer&) = delete; // non construction-copyable
 	ViewExplorer& operator=(const ViewExplorer&) = delete; // non copyable
 	void handleMouse(sf::Mouse mouse);
+	void scroll(sf::Event event);
 	void draw(sf::RenderTarget &target);
+	const sf::IntRect& getDimensions() { return dimensions; }
 	~ViewExplorer();
 private:
 	int columns;
@@ -68,6 +70,8 @@ private:
 	std::shared_ptr<Button> reloadButton;
 	std::vector<std::shared_ptr<Button>> buttons;
 
+	int realHeight, scrollPosition = 0;
+	bool scrollable = false;
 	sf::IntRect dimensions;
 	std::vector<ViewRepresentation> represesentations;
 	sf::RenderTexture explorerTexture;
