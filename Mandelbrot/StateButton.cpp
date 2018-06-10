@@ -64,7 +64,7 @@ void StateButton::changeState(const char target)
 
 	while (target!=states[i])
 	{
-		buttonState = i;
+		i++;
 	}
 
 	updateText();
