@@ -2,8 +2,7 @@
 
 int main(int argc, char** argv)
 {
-	Mandelbrot application;
-	application.init(argc, argv);
+	Mandelbrot application(argc, argv);
 	application.loop();
 
 	return 0;

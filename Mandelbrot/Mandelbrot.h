@@ -13,19 +13,18 @@
 class Mandelbrot
 {
 public:
-	Mandelbrot();
+	Mandelbrot(int argc, char ** argv);
 	Mandelbrot(const Mandelbrot&) = delete; // non construction-copyable
 	Mandelbrot& operator=(const Mandelbrot&) = delete; // non copyable
-	void init(const int argc, char** const argv);
 	void loop();
 	void changeCurrentView(const View &data, const sf::Texture & previewTexture);
 	~Mandelbrot();
 private:
-	void init();
 	void handleEvents(sf::Event &event);
 	void update(sf::Mouse &mouse);
 	void handleClicks();
 	void draw();
+	void prepareImage();
 	void compute(const View &settings);
 	void adjustResolution();
 	void scaleResultSprite();
@@ -51,7 +50,7 @@ private:
 		currentView,		//export
 		nextView;			//temporary storage
 
-	bool isComputing = false, isComputed = false, selectedCenter = false, clickedLeft = false, closeApplication = false;
+	bool isComputing = false, computed = false, selectedCenter = false, clickedLeft = false, closeApplication = false;
 
 	sf::VideoMode desktop;
 	sf::RenderWindow window;

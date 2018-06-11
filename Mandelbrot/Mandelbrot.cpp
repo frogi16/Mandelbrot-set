@@ -3,11 +3,7 @@
 #include <complex>
 #include <fstream>
 
-Mandelbrot::Mandelbrot()
-{
-}
-
-void Mandelbrot::init(int argc, char ** argv)
+Mandelbrot::Mandelbrot(int argc, char ** argv)
 {
 	if (argc == 4)		//direct parameters
 	{
@@ -27,24 +23,19 @@ void Mandelbrot::init(int argc, char ** argv)
 		currentView.radius = temp;
 	}
 
-	init();
-}
-
-void Mandelbrot::init()
-{
 	desktop = sf::VideoMode::getDesktopMode();
 	window.create(sf::VideoMode(desktop.width, desktop.height), "Mandelbrot", sf::Style::Fullscreen);
 
 	graphDimensions = sf::IntRect(desktop.width - desktop.height, 0, desktop.height, desktop.height);
-	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height - 2, 400);
-	currentView.resolution = graphDimensions.width;
+	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height, 400);
 
+	currentView.resolution = graphDimensions.width;
 	result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 	resultSprite.setPosition(graphDimensions.left, graphDimensions.top);
 
 	arial.loadFromFile("arial.ttf");
 
-	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, desktop.height - 400), *this);
+	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, settingsDimensions.height, settingsDimensions.width, desktop.height - settingsDimensions.height), *this);
 
 	undoButton = std::make_shared<Button>(sf::IntRect(220, 100, 120, 40), "Undo");
 	resetButton = std::make_shared<Button>(sf::IntRect(360, 100, 120, 40), "Reset");
@@ -110,7 +101,6 @@ void Mandelbrot::init()
 	{
 		radiusFrame[i].color = sf::Color::Green;
 	}
-
 }
 
 void Mandelbrot::loop()
@@ -123,12 +113,12 @@ void Mandelbrot::loop()
 
 		handleEvents(event);
 
-		if (isComputed)
+		if (computed)
 		{
 			resultTexture.loadFromImage(result);
 			resultSprite.setTexture(resultTexture, true);
 			scaleResultSprite();
-			isComputed = false;
+			computed = false;
 		}
 
 		if (graphDimensions.contains(mouse.getPosition().x, mouse.getPosition().y))
@@ -254,9 +244,7 @@ void Mandelbrot::handleClicks()
 		iterationsField->setString(std::to_string(previousView.iterations));
 		std::swap(currentView, previousView);
 
-		adjustResolution();
-		startThread();
-		clearFrame();
+		prepareImage();
 	}
 
 	if (resetButton->clicked())
@@ -265,9 +253,7 @@ void Mandelbrot::handleClicks()
 		previousView = std::move(currentView);
 		currentView = defaultView;
 
-		adjustResolution();
-		startThread();
-		clearFrame();
+		prepareImage();
 	}
 
 	if (generateButton->clicked())
@@ -280,9 +266,7 @@ void Mandelbrot::handleClicks()
 			previousView = std::move(currentView);
 			currentView = std::move(nextView);
 
-			adjustResolution();
-			startThread();
-			clearFrame();
+			prepareImage();
 		}
 	}
 
@@ -333,6 +317,14 @@ void Mandelbrot::draw()
 	window.draw(radiusFrame);
 
 	window.display();
+}
+
+void Mandelbrot::prepareImage()
+{
+	adjustResolution();
+	startThread();
+	clearFrame();
+	viewExplorer->deselect();
 }
 
 void Mandelbrot::compute(const View & settings)
@@ -401,7 +393,7 @@ void Mandelbrot::compute(const View & settings)
 			}
 		}
 	}
-	isComputed = true;
+	computed = true;
 	isComputing = false;
 }
 
@@ -424,7 +416,7 @@ void Mandelbrot::startThread()
 	if (!isComputing)
 	{
 		isComputing = true;
-		isComputed = false;
+		computed = false;
 		computing = std::thread(&Mandelbrot::compute, this, currentView);
 		computing.detach();
 	}
@@ -447,11 +439,11 @@ void Mandelbrot::exportView(std::string filename) const
 
 void Mandelbrot::exportImage(std::string filename)
 {
-	
 	result.saveToFile(filename);
 	isComputing = false;
 }
 
 Mandelbrot::~Mandelbrot()
 {
+	
 }

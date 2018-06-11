@@ -79,6 +79,7 @@ std::string TextField::getValueString() const
 {
 	std::string temp = contentText.getString();
 	temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+	temp.erase(std::remove(temp.begin(), temp.end(), '\0'), temp.end());
 	return temp;
 }
 

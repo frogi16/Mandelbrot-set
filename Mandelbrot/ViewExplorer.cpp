@@ -6,12 +6,15 @@
 #include <filesystem>
 #include <iostream>
 
-ViewExplorer::ViewExplorer(sf::IntRect dimen, Mandelbrot& own) : dimensions(dimen), columns(3), owner(own)
+ViewExplorer::ViewExplorer(sf::IntRect dimen, Mandelbrot& own) :
+	dimensions(dimen),
+	columns(3),
+	owner(own)
 {
 	arial.loadFromFile("arial.ttf");
 	explorerTexture.create(dimensions.width, dimensions.height);
 	explorerSprite.setPosition(dimensions.left, dimensions.top);
-	
+
 	reloadButton = std::make_shared<Button>(sf::IntRect(dimensions.left + dimensions.width - 90, 10, 80, 40), "Reload");
 	buttons.push_back(reloadButton);
 
@@ -19,7 +22,7 @@ ViewExplorer::ViewExplorer(sf::IntRect dimen, Mandelbrot& own) : dimensions(dime
 	orderSprites();
 }
 
-void ViewExplorer::handleMouse(sf::Mouse mouse)
+void ViewExplorer::handleMouse(const sf::Mouse &mouse)
 {
 	//this class draws all of its components on RenderTexture using texture's local coordinates and for this reason proper handling of mouse events requires translating mouse coordinates to local systen
 
@@ -56,7 +59,7 @@ void ViewExplorer::handleMouse(sf::Mouse mouse)
 
 }
 
-void ViewExplorer::scroll(sf::Event event)
+void ViewExplorer::scroll(const sf::Event &event)
 {
 	if (scrollable)
 	{
@@ -105,25 +108,24 @@ ViewExplorer::~ViewExplorer()
 
 void ViewExplorer::loadViews()
 {
-	for (auto& i : std::experimental::filesystem::directory_iterator("."))		//dot means current directory. C++17 only, experimental approach, but I used old solutions and I'd rather avoid that
+	for (auto& i : std::experimental::filesystem::directory_iterator("."))		//dot means current directory. C++17 only, experimental approach, but I used old solutions and I'd rather avoid doing that again
 	{
 		if (i.path().extension() == ".txt")
 		{
-			std::string name = i.path().filename().generic_string();		//cut extension
+			std::experimental::filesystem::path current = i;
+
+			std::string name = i.path().filename().generic_string();		//without extension
 			name.erase(name.end() - 4, name.end());
 
 			if (!previewExists(name))
 			{
 				loadViewData(i.path().filename().generic_string());		//using these long namespaces and types is tiring and one day "experimental" namespace will be removed, so I converted it to standard string at the first opportunity. If implementation changes it will require changes only in this function (I hope)
-			}
-		}
-	}
 
-	for (auto& i : std::experimental::filesystem::directory_iterator("."))		//unfortunately directory_iterator can access files in random order so I must search for connected images in the second loop
-	{
-		if (i.path().extension() == ".png")
-		{
-			loadViewImage(i.path().filename().generic_string());
+				if (std::experimental::filesystem::exists(current.replace_extension(".png")))
+				{
+					loadViewImage(current.filename().generic_string());
+				}
+			}
 		}
 	}
 }
@@ -156,10 +158,7 @@ void ViewExplorer::loadViewImage(std::string filename)
 	{
 		if (i.name == name)		//found linked data
 		{
-			if (i.previewTexture.getSize().x == 0)		//texture not found
-			{
-				i.previewTexture.loadFromFile(filename);
-			}
+			i.previewTexture.loadFromFile(filename);
 		}
 	}
 }
@@ -204,7 +203,7 @@ void ViewExplorer::orderSprites()
 	}
 }
 
-void ViewExplorer::setNameTextProperties(sf::Text & nameText, sf::FloatRect &area, std::string &name)
+void ViewExplorer::setNameTextProperties(sf::Text & nameText, const sf::FloatRect &area, const std::string &name)
 {
 	nameText.setFont(arial);
 	nameText.setColor(sf::Color::Black);
@@ -229,7 +228,7 @@ bool ViewExplorer::previewExists(const std::string & name)
 	return false;
 }
 
-sf::Vector2f ViewExplorer::centerIn(sf::FloatRect centeredObject, sf::FloatRect area) const
+sf::Vector2f ViewExplorer::centerIn(const sf::FloatRect &centeredObject, const sf::FloatRect &area) const
 {
 	return sf::Vector2f(area.left + (area.width - centeredObject.width) / 2, area.top + (area.height - centeredObject.height) / 2);
 }
