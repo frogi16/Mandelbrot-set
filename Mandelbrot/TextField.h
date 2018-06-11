@@ -23,7 +23,7 @@ public:
 	void draw(sf::RenderTarget& target);
 	void setString(std::string string) { contentText.setString(string);	actualizeText(); }
 	void showError();
-	std::string getValueString();
+	std::string getValueString() const;
 	int getValueInt() const { std::string temp = contentText.getString(); return std::atoi(temp.c_str()); }
 private:
 	sf::Clock errorTimer;

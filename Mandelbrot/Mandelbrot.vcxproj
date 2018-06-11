@@ -164,6 +164,7 @@
     <ClCompile Include="Mandelbrot.cpp" />
     <ClCompile Include="StateButton.cpp" />
     <ClCompile Include="TextField.cpp" />
+    <ClCompile Include="ViewExplorer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Button.h" />
@@ -171,6 +172,7 @@
     <ClInclude Include="Mandelbrot.h" />
     <ClInclude Include="StateButton.h" />
     <ClInclude Include="TextField.h" />
+    <ClInclude Include="ViewExplorer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

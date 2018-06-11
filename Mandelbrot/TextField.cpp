@@ -75,7 +75,7 @@ void TextField::showError()
 	errorTimer.restart();
 }
 
-std::string TextField::getValueString()
+std::string TextField::getValueString() const
 {
 	std::string temp = contentText.getString();
 	temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());

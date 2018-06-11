@@ -36,13 +36,15 @@ void Mandelbrot::init()
 	window.create(sf::VideoMode(desktop.width, desktop.height), "Mandelbrot", sf::Style::Fullscreen);
 
 	graphDimensions = sf::IntRect(desktop.width - desktop.height, 0, desktop.height, desktop.height);
-	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height - 2, desktop.height);
+	settingsDimensions = sf::IntRect(0, 0, desktop.width - desktop.height - 2, 400);
 	currentView.resolution = graphDimensions.width;
 
 	result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 	resultSprite.setPosition(graphDimensions.left, graphDimensions.top);
 
 	arial.loadFromFile("arial.ttf");
+
+	viewExplorer = std::make_unique<ViewExplorer>(sf::IntRect(0, 400, settingsDimensions.width, desktop.height - 400), *this);
 
 	undoButton = std::make_shared<Button>(sf::IntRect(220, 100, 120, 40), "Undo");
 	resetButton = std::make_shared<Button>(sf::IntRect(360, 100, 120, 40), "Reset");
@@ -118,14 +120,14 @@ void Mandelbrot::loop()
 		sf::Time elapsedTime = clock.restart();
 		sf::Event event;
 		sf::Mouse mouse;
-		auto global = resultSprite.getGlobalBounds();
+
 		handleEvents(event);
 
 		if (isComputed)
 		{
 			resultTexture.loadFromImage(result);
 			resultSprite.setTexture(resultTexture, true);
-			resultSprite.setScale(graphDimensions.height / resultSprite.getLocalBounds().height, graphDimensions.height / resultSprite.getLocalBounds().height);
+			scaleResultSprite();
 			isComputed = false;
 		}
 
@@ -178,6 +180,20 @@ void Mandelbrot::loop()
 	}
 }
 
+void Mandelbrot::changeCurrentView(const View & data, const sf::Texture & previewTexture)
+{
+	previousView = std::move(currentView);
+	currentView = data;
+	nextView = data;		//required to proper work when user load view and click generate without choosing any smaller range
+	iterationsField->setString(std::to_string(currentView.iterations));
+	resolutionField->setString(std::to_string(currentView.resolution));
+	colorScheme->changeState(currentView.color);
+	
+	resultTexture = previewTexture;
+	resultSprite.setTexture(resultTexture, true);
+	scaleResultSprite();
+}
+
 void Mandelbrot::handleEvents(sf::Event &event)
 {
 	while (window.pollEvent(event))
@@ -201,6 +217,13 @@ void Mandelbrot::handleEvents(sf::Event &event)
 				i->eraseCharacter();
 			}
 		}
+		else if(event.type==sf::Event::MouseWheelScrolled)
+		{
+			if (viewExplorer->getDimensions().contains(event.mouseWheelScroll.x, event.mouseWheelScroll.y))
+			{
+				viewExplorer->scroll(event);
+			}
+		}
 	}
 }
 
@@ -220,6 +243,8 @@ void Mandelbrot::update(sf::Mouse &mouse)
 	{
 		i->updateMouse(mouse);
 	}
+
+	viewExplorer->handleMouse(mouse);
 }
 
 void Mandelbrot::handleClicks()
@@ -249,12 +274,16 @@ void Mandelbrot::handleClicks()
 	{
 		nextView.color = colorScheme->getState();
 		nextView.iterations = iterationsField->getValueInt();
-		previousView = std::move(currentView);
-		currentView = std::move(nextView);
 
-		adjustResolution();
-		startThread();
-		clearFrame();
+		if (currentView != nextView)
+		{
+			previousView = std::move(currentView);
+			currentView = std::move(nextView);
+
+			adjustResolution();
+			startThread();
+			clearFrame();
+		}
 	}
 
 	if (exportButton->clicked())
@@ -262,7 +291,7 @@ void Mandelbrot::handleClicks()
 		if (!isComputing)
 		{
 			isComputing = true;
-			exportCoordinates(filenameField->getValueString()+".txt");
+			exportView(filenameField->getValueString()+".txt");
 			exporting = std::thread(&Mandelbrot::exportImage, this, filenameField->getValueString() + ".png");
 			exporting.detach();
 		}
@@ -297,6 +326,7 @@ void Mandelbrot::draw()
 	if (isComputing)
 		window.draw(*loading);
 	
+	viewExplorer->draw(window);
 	window.draw(resultSprite);
 	window.draw(centerText);
 	window.draw(radiusText);
@@ -380,8 +410,13 @@ void Mandelbrot::adjustResolution()
 	if (resolutionField->getValueInt() != currentView.resolution)
 	{
 		currentView.resolution = resolutionField->getValueInt();
-		result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
 	}
+	result.create(currentView.resolution, currentView.resolution, sf::Color::Black);
+}
+
+void Mandelbrot::scaleResultSprite()
+{
+	resultSprite.setScale(graphDimensions.height / resultSprite.getLocalBounds().height, graphDimensions.height / resultSprite.getLocalBounds().height);
 }
 
 void Mandelbrot::startThread()
@@ -403,15 +438,16 @@ void Mandelbrot::clearFrame()
 	}
 }
 
-void Mandelbrot::exportCoordinates(std::string filename) const
+void Mandelbrot::exportView(std::string filename) const
 {
 	std::fstream out(filename, std::ios::app);
-	out << currentView.center.x << " " << currentView.center.y << " " << currentView.radius << "\n";
+	out << currentView.getFullString();
 	out.close();
 }
 
 void Mandelbrot::exportImage(std::string filename)
 {
+	
 	result.saveToFile(filename);
 	isComputing = false;
 }

@@ -15,9 +15,11 @@ public:
 	void updateMouse(const sf::Mouse& mouse);
 	void draw(sf::RenderTarget& target);
 	char getState() { return states[buttonState]; }
+	void changeState(const char target);
 private:
 	const char states[3]{ 'R', 'G', 'B' };
 	void changeState();
+	void updateText();
 	bool isGrabbed;
 	int buttonState;
 	sf::RectangleShape button;
