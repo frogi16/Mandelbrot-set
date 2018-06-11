@@ -184,6 +184,7 @@ void Mandelbrot::changeCurrentView(const View & data, const sf::Texture & previe
 {
 	previousView = std::move(currentView);
 	currentView = data;
+	nextView = data;		//required to proper work when user load view and click generate without choosing any smaller range
 	iterationsField->setString(std::to_string(currentView.iterations));
 	resolutionField->setString(std::to_string(currentView.resolution));
 	colorScheme->changeState(currentView.color);
@@ -273,12 +274,16 @@ void Mandelbrot::handleClicks()
 	{
 		nextView.color = colorScheme->getState();
 		nextView.iterations = iterationsField->getValueInt();
-		previousView = std::move(currentView);
-		currentView = std::move(nextView);
 
-		adjustResolution();
-		startThread();
-		clearFrame();
+		if (currentView != nextView)
+		{
+			previousView = std::move(currentView);
+			currentView = std::move(nextView);
+
+			adjustResolution();
+			startThread();
+			clearFrame();
+		}
 	}
 
 	if (exportButton->clicked())

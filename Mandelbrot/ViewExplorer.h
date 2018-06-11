@@ -27,6 +27,9 @@ struct View		//this structure is a legacy after ther original way of generating 
 		}
 	}
 
+	bool View::operator==(const View &b) const { return (resolution == b.resolution && iterations == b.iterations && radius == b.radius && center == b.center &&color == b.color); }
+	bool View::operator!=(const View &b) const { return !operator==(b); }
+
 	int resolution{ 768 }, iterations{ 128 };
 	double radius{ 2 };		//half of the side of the square
 	sf::Vector2<double> center{ -0.5, 0 };
